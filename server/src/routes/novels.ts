@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { db } from '../db'
-import { novels, chapters, characters } from '../schema'
+import { novels, chapters, characters, timelineEvents } from '../schema'
 import { eq, desc, asc } from 'drizzle-orm'
 
 export const novelRoutes = new Elysia({ prefix: '/novels' })
@@ -39,9 +39,33 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
                 .where(eq(chapters.novelId, id))
                 .orderBy(asc(chapters.order))
 
+            const calculateWords = (jsonStr: string | null): number => {
+                if (!jsonStr) return 0
+                try {
+                    const contentObj = JSON.parse(jsonStr)
+                    const getText = (node: any): string => {
+                        if (node.type === 'text') return node.text || ''
+                        if (node.content) return node.content.map(getText).join(' ')
+                        return ''
+                    }
+                    const text = getText(contentObj)
+                    return text.trim() ? text.trim().split(/\s+/).length : 0
+                } catch {
+                    return 0
+                }
+            }
+
+            const chaptersWithStats = (novelChapters || []).map(chapter => ({
+                ...chapter,
+                wordCount: calculateWords(chapter.content)
+            }))
+
+            const totalWords = chaptersWithStats.reduce((sum, c) => sum + c.wordCount, 0)
+
             return {
                 ...novel[0],
-                chapters: novelChapters
+                chapters: chaptersWithStats,
+                totalWords
             }
         } catch (error) {
             set.status = 500
@@ -51,6 +75,29 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
         params: t.Object({
             id: t.String()
         })
+    })
+    .patch('/:id/chapters/reorder', async ({ params: { id }, body, set }) => {
+        try {
+            await db.transaction(async (tx) => {
+                for (const item of body) {
+                    await tx.update(chapters)
+                        .set({ order: item.order })
+                        .where(eq(chapters.id, item.id))
+                }
+            })
+            return { message: 'Chapters reordered successfully' }
+        } catch (error) {
+            set.status = 500
+            return { error: 'Reorder failed', details: error }
+        }
+    }, {
+        params: t.Object({
+            id: t.String()
+        }),
+        body: t.Array(t.Object({
+            id: t.String(),
+            order: t.Number()
+        }))
     })
     .delete('/:id', async ({ params: { id }, set }) => {
         try {

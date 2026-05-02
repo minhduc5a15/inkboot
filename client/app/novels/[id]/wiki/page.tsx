@@ -54,7 +54,7 @@ export default function WikiPage({ params }: { params: Promise<{ id: string }> }
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfaf7] p-8">
+    <div className="min-h-screen p-8">
       <div className="max-w-6xl mx-auto space-y-8">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">

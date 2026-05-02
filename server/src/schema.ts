@@ -52,3 +52,12 @@ export const timelineEvents = pgTable("timeline_events", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+export const chapterVersions = pgTable("chapter_versions", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  chapterId: uuid("chapter_id")
+    .references(() => chapters.id, { onDelete: "cascade" })
+    .notNull(),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});

@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { db } from '../db'
-import { chapters } from '../schema'
-import { eq } from 'drizzle-orm'
+import { chapters, chapterVersions } from '../schema'
+import { eq, desc } from 'drizzle-orm'
 
 export const chapterRoutes = new Elysia({ prefix: '/chapters' })
     .post('/', async ({ body, set }) => {
@@ -82,6 +82,40 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
         } catch (error) {
             set.status = 500
             return { error: 'Failed to delete chapter', details: error }
+        }
+    }, {
+        params: t.Object({
+            id: t.String()
+        })
+    })
+    .post('/:id/versions', async ({ params: { id }, body, set }) => {
+        try {
+            const [version] = await db.insert(chapterVersions).values({
+                chapterId: id,
+                content: body.content
+            }).returning()
+            set.status = 201
+            return version
+        } catch (error) {
+            set.status = 500
+            return { error: 'Failed to save version', details: error }
+        }
+    }, {
+        params: t.Object({
+            id: t.String()
+        }),
+        body: t.Object({
+            content: t.String()
+        })
+    })
+    .get('/:id/versions', async ({ params: { id } }) => {
+        try {
+            return await db.select()
+                .from(chapterVersions)
+                .where(eq(chapterVersions.chapterId, id))
+                .orderBy(desc(chapterVersions.createdAt))
+        } catch (error) {
+            return { error: 'Failed to fetch versions', details: error }
         }
     }, {
         params: t.Object({

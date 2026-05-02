@@ -23,6 +23,8 @@ export const metadata: Metadata = {
 };
 
 import Navbar from "@/components/Navbar";
+import { FocusProvider } from "@/lib/focus-context";
+import LayoutContent from "@/components/LayoutContent";
 
 export default function RootLayout({
   children,
@@ -34,11 +36,12 @@ export default function RootLayout({
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex bg-[#fcfaf7]">
-        <Navbar />
-        <div className="flex-1 overflow-auto">
-          {children}
-        </div>
+      <body className="min-h-full" suppressHydrationWarning>
+        <FocusProvider>
+          <LayoutContent>
+            {children}
+          </LayoutContent>
+        </FocusProvider>
       </body>
     </html>
   );

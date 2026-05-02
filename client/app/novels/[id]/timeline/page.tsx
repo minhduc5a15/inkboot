@@ -70,7 +70,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   }
 
   return (
-    <div className="min-h-screen bg-[#fcfaf7] p-12">
+    <div className="min-h-screen p-12">
       <div className="max-w-4xl mx-auto space-y-12">
         <div className="flex justify-between items-center">
           <div className="flex items-center gap-4">

@@ -1,30 +1,23 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import { Plus, BookOpen, Clock, ChevronRight, BookPlus } from 'lucide-react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { Plus, Book, Trash2, ChevronRight, Library as LibraryIcon, Search, FileText } from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { motion } from 'motion/react'
 
 interface Novel {
   id: string
   title: string
-  description?: string | null
-  createdAt: string
+  description: string | null
+  totalWords: number
   updatedAt: string
 }
 
-export default function HomePage() {
+export default function Library() {
   const [novels, setNovels] = useState<Novel[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isModalOpen, setIsModalOpen] = useState(false)
-  const [newNovel, setNewNovel] = useState({ title: '', description: '' })
-  const router = useRouter()
+  const [loading, setLoading] = useState(true)
 
   const fetchNovels = async () => {
     try {
@@ -34,7 +27,7 @@ export default function HomePage() {
     } catch (error) {
       console.error('Failed to fetch novels:', error)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
@@ -42,116 +35,123 @@ export default function HomePage() {
     fetchNovels()
   }, [])
 
-  const handleCreate = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const createNovel = async () => {
+    const title = prompt('Tiêu đề tiểu thuyết:')
+    if (!title) return
+
     try {
       const res = await fetch('http://localhost:3000/novels', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(newNovel),
+        body: JSON.stringify({ title, description: 'Một câu chuyện mới...' }),
       })
-      if (res.ok) {
-        setIsModalOpen(false)
-        setNewNovel({ title: '', description: '' })
-        fetchNovels()
-      }
+      if (res.ok) fetchNovels()
     } catch (error) {
-      console.error('Failed to create novel:', error)
+      console.error(error)
     }
   }
 
-  if (isLoading) {
-    return (
-      <div className="p-8 max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map(i => <Card key={i} className="h-48 animate-pulse bg-slate-100" />)}
-      </div>
-    )
+  const deleteNovel = async (id: string) => {
+    if (!confirm('Bạn có chắc muốn xóa tiểu thuyết này? Toàn bộ chương và dữ liệu sẽ mất.')) return
+    try {
+      await fetch(`http://localhost:3000/novels/${id}`, { method: 'DELETE' })
+      fetchNovels()
+    } catch (error) {
+      console.error(error)
+    }
   }
 
   return (
-    <div className="p-12 max-w-7xl mx-auto space-y-12">
-      <div className="flex justify-between items-end">
-        <div>
-          <h1 className="text-4xl font-serif font-bold text-slate-900">Dự án của tôi</h1>
-          <p className="text-slate-500 mt-2">Quản lý và sáng tác các tác phẩm của bạn</p>
-        </div>
-
-        <Dialog open={isModalOpen} onOpenChange={setIsModalOpen}>
-          <DialogTrigger asChild>
-            <Button className="rounded-full px-6 py-6 h-auto shadow-lg shadow-primary/20">
-              <Plus className="h-5 w-5 mr-2" />
-              Tạo tiểu thuyết mới
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle className="text-2xl font-serif">Khởi tạo tác phẩm</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreate} className="space-y-6 pt-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Tiêu đề</Label>
-                <Input 
-                  id="title" 
-                  placeholder="VD: Chuyến hành trình cuối cùng" 
-                  value={newNovel.title}
-                  onChange={e => setNewNovel({...newNovel, title: e.target.value})}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="description">Mô tả tóm tắt</Label>
-                <Textarea 
-                  id="description" 
-                  placeholder="Giới thiệu sơ lược về tác phẩm..." 
-                  value={newNovel.description}
-                  onChange={e => setNewNovel({...newNovel, description: e.target.value})}
-                  rows={4}
-                />
-              </div>
-              <DialogFooter>
-                <Button type="submit" className="w-full h-12">Bắt đầu viết</Button>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
-
-      {novels.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-24 bg-white rounded-3xl border-2 border-dashed border-slate-200">
-          <div className="h-20 w-20 rounded-full bg-slate-50 flex items-center justify-center mb-6">
-            <BookPlus className="h-10 w-10 text-slate-300" />
+    <div className="min-h-screen">
+      <div className="max-w-6xl mx-auto p-12 space-y-16">
+        
+        {/* Hero Section */}
+        <div className="flex justify-between items-end border-b border-[#262626] pb-12">
+          <div className="space-y-4">
+            <div className="flex items-center gap-3 text-[#666]">
+              <LibraryIcon size={16} />
+              <span className="text-[10px] uppercase tracking-[0.4em] font-semibold">Manuscripts</span>
+            </div>
+            <h1 className="text-6xl font-serif italic text-white tracking-tight opacity-90">Studio</h1>
           </div>
-          <h2 className="text-xl font-serif font-bold text-slate-900">Chưa có tác phẩm nào</h2>
-          <p className="text-slate-500 mt-2 mb-8">Hãy bắt đầu hành trình sáng tác bằng cách tạo tiểu thuyết đầu tiên.</p>
-          <Button variant="outline" onClick={() => setIsModalOpen(true)}>
-            Tạo ngay
+          
+          <Button 
+            onClick={createNovel}
+            className="bg-[#ffffff0a] hover:bg-[#ffffff10] text-white border border-[#ffffff10] rounded h-11 px-8 text-[10px] font-bold uppercase tracking-[0.2em] transition-all"
+          >
+            <Plus size={16} className="mr-2" /> New Project
           </Button>
         </div>
-      ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-          {novels.map((novel) => (
-            <Link key={novel.id} href={`/novels/${novel.id}`}>
-              <Card className="group hover:border-primary/50 transition-all duration-300 cursor-pointer h-full flex flex-col shadow-sm hover:shadow-xl hover:-translate-y-1">
-                <CardHeader>
-                  <CardTitle className="font-serif text-2xl group-hover:text-primary transition-colors">
-                    {novel.title}
-                  </CardTitle>
-                  <CardDescription className="line-clamp-3 mt-2 min-h-[4.5rem]">
-                    {novel.description || 'Chưa có mô tả cho tác phẩm này...'}
-                  </CardDescription>
-                </CardHeader>
-                <CardFooter className="mt-auto pt-6 border-t flex justify-between items-center text-xs text-slate-400">
-                  <div className="flex items-center gap-1.5">
-                    <Clock className="h-3.5 w-3.5" />
-                    Cập nhật: {new Date(novel.updatedAt).toLocaleDateString('vi-VN')}
+
+        {/* Grid */}
+        {loading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {[1, 2, 3].map(i => (
+              <div key={i} className="h-64 bg-[#1a1a1a] border border-[#262626] rounded animate-pulse" />
+            ))}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {Array.isArray(novels) && novels.map((novel) => (
+              <motion.div 
+                key={novel.id}
+                whileHover={{ y: -2 }}
+                className="group relative bg-[#1a1a1a] border border-[#262626] rounded p-8 flex flex-col justify-between hover:border-[#444] transition-all duration-300"
+              >
+                <div className="space-y-6">
+                  <div className="flex justify-between items-start">
+                    <div className="p-2 bg-[#262626] rounded text-[#888] group-hover:text-white transition-colors">
+                      <FileText size={20} />
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="icon" 
+                      onClick={(e) => { e.preventDefault(); deleteNovel(novel.id); }}
+                      className="text-[#444] hover:text-red-400 hover:bg-red-400/10 opacity-0 group-hover:opacity-100 transition-opacity"
+                    >
+                      <Trash2 size={16} />
+                    </Button>
                   </div>
-                  <ChevronRight className="h-4 w-4 group-hover:translate-x-1 transition-transform" />
-                </CardFooter>
-              </Card>
-            </Link>
-          ))}
-        </div>
-      )}
+                  
+                  <div className="space-y-2">
+                    <h2 className="text-2xl font-serif italic text-white opacity-90 group-hover:underline">
+                      <Link href={`/novels/${novel.id}`}>{novel.title}</Link>
+                    </h2>
+                    <p className="text-sm text-[#666] line-clamp-2 italic font-serif leading-relaxed">
+                      {novel.description || 'No description provided.'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="mt-8 pt-6 border-t border-[#262626] flex justify-between items-center">
+                  <div className="flex flex-col">
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-[#444] font-bold">Word Count</span>
+                    <span className="text-sm font-mono text-[#888]">{(novel.totalWords ?? 0).toLocaleString()}</span>
+                  </div>
+                  <Link href={`/novels/${novel.id}`}>
+                    <Button variant="ghost" size="sm" className="text-[#666] hover:text-white text-[10px] uppercase tracking-widest font-bold">
+                      Open <ChevronRight size={14} className="ml-1" />
+                    </Button>
+                  </Link>
+                </div>
+              </motion.div>
+            ))}
+          </div>
+        )}
+
+        {novels.length === 0 && !loading && (
+          <div className="text-center py-32 space-y-6 border border-dashed border-[#262626] rounded">
+             <div className="p-6 bg-[#1a1a1a] rounded w-fit mx-auto text-[#444]">
+                <Plus size={48} />
+             </div>
+             <div className="space-y-2">
+                <h3 className="text-xl font-serif italic text-[#888]">No manuscripts found</h3>
+                <p className="text-[#666] text-sm">Start your creative journey today.</p>
+             </div>
+             <Button onClick={createNovel} className="bg-[#262626] text-white hover:bg-[#333]">Create First Story</Button>
+          </div>
+        )}
+      </div>
     </div>
   )
 }

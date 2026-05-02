@@ -1,297 +1,302 @@
 'use client'
 
-import { useState, useEffect, use } from 'react'
-import { Button } from '@/components/ui/button'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger, DialogFooter } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
+import { use, useState } from 'react'
+import Link from 'next/link'
 import { 
   Plus, 
-  Settings, 
+  FileText, 
   Trash2, 
-  FileEdit, 
-  BookText, 
-  ArrowLeft,
-  ChevronRight,
+  Download, 
+  ChevronRight, 
+  BarChart3, 
+  Clock, 
+  BookOpen,
+  Users,
+  Calendar,
+  Settings,
   MoreVertical,
-  Library,
-  History,
-  Download,
-  FileText
+  GripVertical
 } from 'lucide-react'
-import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { 
-  DropdownMenu, 
-  DropdownMenuContent, 
-  DropdownMenuItem, 
-  DropdownMenuTrigger 
+import { Button } from '@/components/ui/button'
+import { Progress } from '@/components/ui/progress'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu'
+import {
+  DndContext,
+  closestCenter,
+  KeyboardSensor,
+  PointerSensor,
+  useSensor,
+  useSensors,
+  DragEndEvent
+} from '@dnd-kit/core'
+import {
+  arrayMove,
+  SortableContext,
+  sortableKeyboardCoordinates,
+  verticalListSortingStrategy,
+  useSortable
+} from '@dnd-kit/sortable'
+import { CSS } from '@dnd-kit/utilities'
 
 interface Chapter {
   id: string
   title: string
   order: number
-  updatedAt: string
+  wordCount: number
 }
 
-interface Novel {
-  id: string
-  title: string
-  description?: string | null
-  chapters: Chapter[]
+interface SortableChapterProps {
+  chapter: Chapter
+  novelId: string
+  onDelete: (id: string) => void
 }
 
-export default function NovelHubPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id: novelId } = use(params)
-  const [novel, setNovel] = useState<Novel | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-  const [isChapterModalOpen, setIsChapterModalOpen] = useState(false)
-  const [newChapterTitle, setNewChapterTitle] = useState('')
-  const router = useRouter()
+function SortableChapter({ chapter, novelId, onDelete }: SortableChapterProps) {
+  const {
+    attributes,
+    listeners,
+    setNodeRef,
+    transform,
+    transition,
+    isDragging
+  } = useSortable({ id: chapter.id })
 
-  const fetchNovel = async () => {
+  const style = {
+    transform: CSS.Transform.toString(transform),
+    transition,
+    zIndex: isDragging ? 50 : 0
+  }
+
+  return (
+    <div
+      ref={setNodeRef}
+      style={style}
+      className={`group flex items-center justify-between p-4 bg-[#1a1a1a] border border-[#262626] rounded-xl hover:border-[#444] transition-all duration-300 ${isDragging ? 'opacity-50 scale-[0.98] shadow-2xl' : ''}`}
+    >
+      <div className="flex items-center gap-4 flex-1">
+        <div {...attributes} {...listeners} className="p-2 cursor-grab active:cursor-grabbing text-[#444] hover:text-[#888] transition-colors">
+          <GripVertical size={16} />
+        </div>
+        <Link href={`/edit/${chapter.id}`} className="flex-1 flex items-center gap-3">
+          <div className="p-2 bg-[#262626] rounded-lg text-[#888] group-hover:text-white transition-colors">
+            <FileText size={18} />
+          </div>
+          <div>
+            <h3 className="font-serif italic text-lg text-white group-hover:underline">{chapter.title}</h3>
+            <span className="text-[10px] uppercase tracking-widest text-[#666] font-bold">CHƯƠNG {chapter.order} • {chapter.wordCount} TỪ</span>
+          </div>
+        </Link>
+      </div>
+      <div className="flex items-center gap-2">
+         <Button
+          variant="ghost"
+          size="icon"
+          className="text-[#444] hover:text-red-400 hover:bg-red-400/10"
+          onClick={() => onDelete(chapter.id)}
+        >
+          <Trash2 size={16} />
+        </Button>
+      </div>
+    </div>
+  )
+}
+
+export default function NovelHub({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params)
+  const [novel, setNovel] = useState<any>(null)
+  const [chapters, setChapters] = useState<Chapter[]>([])
+  const [loading, setLoading] = useState(true)
+
+  const sensors = useSensors(
+    useSensor(PointerSensor),
+    useSensor(KeyboardSensor, {
+      coordinateGetter: sortableKeyboardCoordinates,
+    })
+  )
+
+  const fetchData = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/novels/${novelId}`)
+      const res = await fetch(`http://localhost:3000/novels/${id}`)
       if (!res.ok) throw new Error('Failed to fetch novel')
+      
       const data = await res.json()
       setNovel(data)
+      setChapters((data.chapters || []).sort((a: any, b: any) => a.order - b.order))
     } catch (error) {
       console.error(error)
-      router.push('/')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  useEffect(() => {
-    fetchNovel()
-  }, [novelId])
+  useState(() => {
+    fetchData()
+  })
 
-  const handleCreateChapter = async (e: React.FormEvent) => {
-    e.preventDefault()
+  const addChapter = async () => {
+    const title = prompt('Tiêu đề chương:')
+    if (!title) return
+
     try {
-      const nextOrder = (novel?.chapters.length || 0) + 1
       const res = await fetch('http://localhost:3000/chapters', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ 
-          title: newChapterTitle, 
-          novelId, 
-          order: nextOrder,
-          content: JSON.stringify({ type: 'doc', content: [] }) // Default Tiptap content
-        }),
+        body: JSON.stringify({
+          novelId: id,
+          title,
+          order: chapters.length + 1,
+          content: '{}'
+        })
       })
-      if (res.ok) {
-        setIsChapterModalOpen(false)
-        setNewChapterTitle('')
-        fetchNovel()
-      }
+      if (res.ok) fetchData()
     } catch (error) {
       console.error(error)
     }
   }
 
-  const handleDeleteChapter = async (id: string) => {
+  const deleteChapter = async (chapterId: string) => {
     if (!confirm('Bạn có chắc muốn xóa chương này?')) return
     try {
-      const res = await fetch(`http://localhost:3000/chapters/${id}`, { method: 'DELETE' })
-      if (res.ok) fetchNovel()
+      await fetch(`http://localhost:3000/chapters/${chapterId}`, { method: 'DELETE' })
+      fetchData()
     } catch (error) {
       console.error(error)
     }
   }
 
-  const handleDeleteNovel = async () => {
-    if (!confirm('HÀNH ĐỘNG NÀY KHÔNG THỂ HOÀN TÁC. Bạn có chắc muốn xóa toàn bộ dự án này?')) return
-    try {
-      const res = await fetch(`http://localhost:3000/novels/${novelId}`, { method: 'DELETE' })
-      if (res.ok) router.push('/')
-    } catch (error) {
-      console.error(error)
-    }
-  }
-
-  const handleExport = async (format: 'markdown' | 'txt') => {
-    try {
-      const response = await fetch(`http://localhost:3000/novels/${novelId}/export/${format}`)
-      if (!response.ok) throw new Error('Export failed')
+  const handleDragEnd = async (event: DragEndEvent) => {
+    const { active, over } = event
+    if (over && active.id !== over.id) {
+      const oldIndex = chapters.findIndex((c) => c.id === active.id)
+      const newIndex = chapters.findIndex((c) => c.id === over.id)
+      const newChapters = arrayMove(chapters, oldIndex, newIndex)
       
-      const blob = await response.blob()
-      const url = window.URL.createObjectURL(blob)
-      const a = document.createElement('a')
-      a.href = url
-      a.download = `${novel?.title.replace(/\s+/g, '_')}.${format === 'markdown' ? 'md' : 'txt'}`
-      document.body.appendChild(a)
-      a.click()
-      window.URL.revokeObjectURL(url)
-      document.body.removeChild(a)
-    } catch (error) {
-      console.error(error)
-      alert('Lỗi khi xuất file')
+      setChapters(newChapters)
+
+      try {
+        await fetch(`http://localhost:3000/novels/${id}/chapters/reorder`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(
+            newChapters.map((c, i) => ({ id: c.id, order: i + 1 }))
+          )
+        })
+      } catch (error) {
+        console.error('Failed to reorder:', error)
+        fetchData()
+      }
     }
   }
 
-  if (isLoading) return <div className="p-12 animate-pulse font-serif text-2xl">Đang tải dự án...</div>
-  if (!novel) return null
+  const exportNovel = async (format: 'markdown' | 'text') => {
+    window.open(`http://localhost:3000/novels/${id}/export?format=${format}`, '_blank')
+  }
+
+  if (loading) return null
+  if (!novel) return <div className="p-12 text-center text-[#666]">Không tìm thấy tác phẩm.</div>
+
+  const targetWords = 50000;
+  const totalWords = novel.totalWords ?? 0;
+  const progress = Math.min((totalWords / targetWords) * 100, 100);
 
   return (
-    <div className="min-h-screen bg-[#fcfaf7]">
-      <div className="max-w-6xl mx-auto p-12 space-y-12">
+    <div className="min-h-screen">
+      <div className="max-w-5xl mx-auto p-12 space-y-16">
+        
         {/* Header */}
-        <div className="flex justify-between items-start">
+        <div className="flex justify-between items-end">
           <div className="space-y-4">
-            <Link href="/" className="text-slate-400 hover:text-primary flex items-center gap-1 text-sm transition-colors">
-              <ArrowLeft className="h-4 w-4" /> Quay lại danh sách
-            </Link>
-            <h1 className="text-5xl font-serif font-bold text-slate-900">{novel.title}</h1>
-            <p className="text-slate-500 max-w-2xl italic leading-relaxed">
-              {novel.description || 'Tác phẩm chưa có mô tả...'}
-            </p>
+            <span className="text-[11px] uppercase tracking-[0.3em] text-[#666] font-bold">PROJECT HUB</span>
+            <h1 className="text-5xl font-serif italic text-white">{novel.title}</h1>
+            <p className="text-[#888] font-serif italic text-lg">{novel.description}</p>
           </div>
-
           <div className="flex gap-3">
-             <Link href={`/novels/${novelId}/wiki`}>
-                <Button variant="outline" className="rounded-full">
-                  <Library className="h-4 w-4 mr-2" />
-                  Wiki Nhân vật
-                </Button>
-             </Link>
-             <Link href={`/novels/${novelId}/timeline`}>
-                <Button variant="outline" className="rounded-full">
-                  <History className="h-4 w-4 mr-2" />
-                  Dòng thời gian
-                </Button>
-             </Link>
-             
-             <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="rounded-full">
-                    <Download className="h-4 w-4 mr-2" />
-                    Xuất bản
-                  </Button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => handleExport('markdown')}>
-                    <FileText className="h-4 w-4 mr-2" /> Xuất bản (.md)
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => handleExport('txt')}>
-                    <FileText className="h-4 w-4 mr-2" /> Xuất bản (.txt)
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-             </DropdownMenu>
-
-             <Button variant="destructive" size="icon" className="rounded-full" onClick={handleDeleteNovel}>
-               <Trash2 className="h-4 w-4" />
-             </Button>
+             <Link href={`/novels/${id}/wiki`}>
+              <Button variant="outline" className="border-[#262626] bg-[#1a1a1a] hover:bg-[#262626] text-[#888] hover:text-white px-6">
+                <Users size={16} className="mr-2" /> WIKI
+              </Button>
+            </Link>
+            <Link href={`/novels/${id}/timeline`}>
+              <Button variant="outline" className="border-[#262626] bg-[#1a1a1a] hover:bg-[#262626] text-[#888] hover:text-white px-6">
+                <Calendar size={16} className="mr-2" /> TIMELINE
+              </Button>
+            </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Main Content - Chapters */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="flex justify-between items-center border-b pb-4">
-              <h2 className="text-2xl font-serif font-bold flex items-center gap-2">
-                <BookText className="h-6 w-6 text-primary" />
-                Danh sách chương ({novel.chapters.length})
-              </h2>
-              
-              <Dialog open={isChapterModalOpen} onOpenChange={setIsChapterModalOpen}>
-                <DialogTrigger asChild>
-                  <Button variant="ghost" size="sm" className="text-primary hover:text-primary hover:bg-primary/5">
-                    <Plus className="h-4 w-4 mr-1" /> Thêm chương mới
-                  </Button>
-                </DialogTrigger>
-                <DialogContent>
-                  <DialogHeader>
-                    <DialogTitle className="font-serif">Thêm chương mới</DialogTitle>
-                  </DialogHeader>
-                  <form onSubmit={handleCreateChapter} className="space-y-4 pt-4">
-                    <div className="space-y-2">
-                      <Label htmlFor="chapterTitle">Tiêu đề chương</Label>
-                      <Input 
-                        id="chapterTitle" 
-                        placeholder="VD: Chương 1: Sự khởi đầu" 
-                        value={newChapterTitle}
-                        onChange={e => setNewChapterTitle(e.target.value)}
-                        required
-                      />
-                    </div>
-                    <Button type="submit" className="w-full">Khởi tạo chương</Button>
-                  </form>
-                </DialogContent>
-              </Dialog>
+        {/* Stats Grid */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+          {[
+            { label: 'TỔNG SỐ TỪ', value: (novel.totalWords ?? 0).toLocaleString() },
+            { label: 'THỜI GIAN ĐỌC', value: `~${Math.ceil((novel.totalWords ?? 0) / 200)} PHÚT` },
+            { label: 'SỐ CHƯƠNG', value: chapters.length },
+          ].map((stat, i) => (
+            <div key={i} className="space-y-3">
+              <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">{stat.label}</span>
+              <p className="text-3xl font-serif italic text-white opacity-90">{stat.value}</p>
             </div>
+          ))}
+        </div>
 
-            <div className="space-y-3">
-              {novel.chapters.length === 0 ? (
-                <div className="py-12 text-center text-slate-400 border-2 border-dashed rounded-2xl">
-                  Chưa có chương nào. Hãy tạo chương đầu tiên để bắt đầu viết.
-                </div>
-              ) : (
-                novel.chapters.map((chapter) => (
-                  <div 
-                    key={chapter.id} 
-                    className="group flex items-center justify-between p-4 bg-white rounded-xl border border-slate-200 hover:border-primary/30 hover:shadow-md transition-all"
-                  >
-                    <div className="flex items-center gap-4">
-                      <div className="h-10 w-10 rounded-lg bg-slate-50 flex items-center justify-center font-serif text-slate-400">
-                        {chapter.order}
-                      </div>
-                      <div>
-                        <h3 className="font-bold text-slate-900 group-hover:text-primary transition-colors">
-                          {chapter.title}
-                        </h3>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          Cập nhật: {new Date(chapter.updatedAt).toLocaleDateString('vi-VN')}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="flex items-center gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
-                      <Link href={`/edit/${chapter.id}`}>
-                        <Button variant="ghost" size="sm">
-                          <FileEdit className="h-4 w-4 mr-2" />
-                          Viết
-                        </Button>
-                      </Link>
-                      <Button variant="ghost" size="sm" className="text-destructive hover:text-destructive hover:bg-destructive/5" onClick={() => handleDeleteChapter(chapter.id)}>
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
-                    </div>
-                  </div>
-                ))
-              )}
-            </div>
+        {/* Progress Section */}
+        <div className="space-y-6">
+          <div className="flex justify-between items-end">
+            <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">TIẾN ĐỘ BẢN THẢO</span>
+            <span className="text-2xl font-serif italic text-white opacity-90">{Math.round(progress)}%</span>
           </div>
+          <Progress value={progress} className="h-0.5 bg-[#262626]" />
+          <p className="text-[9px] text-[#444] uppercase tracking-[0.2em] text-center font-bold">{(novel.totalWords ?? 0).toLocaleString()} / {targetWords.toLocaleString()} TỪ</p>
+        </div>
 
-          {/* Sidebar Info */}
-          <div className="space-y-6">
-             <Card className="bg-slate-900 text-white border-none shadow-xl rounded-3xl overflow-hidden">
-                <CardHeader className="pb-2">
-                  <CardTitle className="font-serif text-lg text-slate-400">Thống kê dự án</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4 pt-4">
-                  <div className="flex justify-between items-end border-b border-slate-800 pb-4">
-                    <span className="text-slate-400 text-sm">Số chương</span>
-                    <span className="text-3xl font-serif font-bold">{novel.chapters.length}</span>
-                  </div>
-                  <div className="flex justify-between items-end border-b border-slate-800 pb-4">
-                    <span className="text-slate-400 text-sm">Trạng thái</span>
-                    <span className="text-green-400 font-medium">Đang tiến hành</span>
-                  </div>
-                </CardContent>
-             </Card>
+        {/* Chapters Section */}
+        <div className="space-y-8">
+          <div className="flex justify-between items-center border-b border-[#262626] pb-4">
+             <h2 className="text-[11px] uppercase tracking-[0.3em] text-[#666] font-bold">DANH SÁCH CHƯƠNG</h2>
+             <div className="flex gap-4">
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="sm" className="text-[#666] hover:text-white uppercase tracking-widest text-[10px] font-bold">
+                      <Download size={14} className="mr-2" /> XUẤT BẢN
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent className="bg-[#1a1a1a] border-[#262626] text-[#d4d4d4]">
+                    <DropdownMenuItem onClick={() => exportNovel('markdown')} className="hover:bg-[#262626]">MARKDOWN (.MD)</DropdownMenuItem>
+                    <DropdownMenuItem onClick={() => exportNovel('text')} className="hover:bg-[#262626]">TEXT (.TXT)</DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
-             <div className="p-6 bg-white rounded-3xl border border-slate-200 shadow-sm space-y-4">
-                <h3 className="font-serif font-bold text-slate-900">Ghi chú nhanh</h3>
-                <p className="text-sm text-slate-500 italic">
-                  "Viết là một hành trình dài, hãy bắt đầu bằng một câu văn nhỏ."
-                </p>
+                <Button onClick={addChapter} className="bg-white text-black hover:bg-white/90 rounded-full px-6 text-[10px] font-bold uppercase tracking-widest shadow-xl">
+                  <Plus size={14} className="mr-2" /> CHƯƠNG MỚI
+                </Button>
              </div>
           </div>
+
+          <DndContext 
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragEnd={handleDragEnd}
+          >
+            <SortableContext 
+              items={chapters.map(c => c.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              <div className="space-y-3">
+                {chapters.map((chapter) => (
+                  <SortableChapter 
+                    key={chapter.id} 
+                    chapter={chapter} 
+                    novelId={id}
+                    onDelete={deleteChapter}
+                  />
+                ))}
+              </div>
+            </SortableContext>
+          </DndContext>
         </div>
       </div>
     </div>
