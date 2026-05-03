@@ -30,6 +30,7 @@ import { Button } from '@/components/ui/button'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { motion, AnimatePresence } from 'motion/react'
 import { useFocus } from '@/lib/focus-context'
+import { toast } from 'sonner'
 
 interface ChapterVersion {
   id: string
@@ -71,30 +72,36 @@ export default function Editor({ id, initialContent, title, order, characters }:
     if (!editor) return
     try {
       const content = JSON.stringify(editor.getJSON())
-      await fetch(`http://localhost:3000/chapters/${id}/versions`, {
+      const res = await fetch(`http://localhost:3000/chapters/${id}/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
       })
-      fetchVersions()
+      if (res.ok) {
+        toast.success('Đã lưu phiên bản mới')
+        fetchVersions()
+      }
     } catch (error) {
-      console.error('Failed to save snapshot:', error)
+      toast.error('Không thể lưu bản nháp')
     }
   }
 
-  const restoreVersion = async (version: ChapterVersion) => {
-    if (!confirm('Bạn có chắc muốn khôi phục phiên bản này?')) return
+  const restoreVersion = async (versionId: string, versionContent: string) => {
     try {
-      const content = JSON.parse(version.content)
-      editor?.commands.setContent(content)
-      await fetch(`http://localhost:3000/chapters/${id}`, {
+      const response = await fetch(`http://localhost:3000/chapters/${id}/restore`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ content: version.content }),
+        body: JSON.stringify({ versionId }),
       })
-      setSaveStatus('saved')
+      
+      if (response.ok) {
+        const content = JSON.parse(versionContent)
+        editor?.commands.setContent(content)
+        setSaveStatus('saved')
+        toast.success('Đã khôi phục thành công')
+      }
     } catch (error) {
-      console.error('Failed to restore version:', error)
+      toast.error('Lỗi khi khôi phục')
     }
   }
 
@@ -253,15 +260,58 @@ export default function Editor({ id, initialContent, title, order, characters }:
                           <SheetTitle className="text-[10px] uppercase tracking-[0.2em] text-[#666]">Lịch sử phiên bản</SheetTitle>
                         </SheetHeader>
                         <div className="mt-8 space-y-4">
-                          <Button onClick={saveSnapshot} variant="outline" className="w-full border-[#262626] hover:bg-[#262626]">
+                          <Button onClick={saveSnapshot} variant="outline" className="w-full border-[#262626] hover:bg-[#262626] text-[10px] uppercase tracking-widest font-bold">
                             <Save size={14} className="mr-2" /> Lưu bản nháp
                           </Button>
                           {versions.map((v) => (
-                            <div key={v.id} className="p-4 rounded-lg border border-[#262626] bg-[#161616] space-y-3">
-                              <span className="text-[10px] text-[#666] font-mono">{new Date(v.createdAt).toLocaleString()}</span>
+                            <div key={v.id} className="p-4 rounded border border-[#262626] bg-[#161616] space-y-4">
+                              <div className="flex flex-col gap-1">
+                                <span className="text-[10px] text-[#666] font-mono">{new Date(v.createdAt).toLocaleString()}</span>
+                                <span className="text-[9px] uppercase tracking-widest text-[#444] font-bold">Snapshotted</span>
+                              </div>
                               <div className="flex gap-2">
-                                <Button size="sm" variant="ghost" className="text-xs" onClick={() => editor?.commands.setContent(JSON.parse(v.content))}>Xem</Button>
-                                <Button size="sm" variant="secondary" className="text-xs bg-[#262626]" onClick={() => restoreVersion(v)}>Khôi phục</Button>
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button size="sm" variant="ghost" className="text-[10px] uppercase tracking-widest h-8 px-4 border border-[#262626] hover:bg-[#262626]">Xem</Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="bg-[#1a1a1a] border-[#262626] text-[#d4d4d4] max-w-2xl max-h-[80vh] overflow-y-auto">
+                                    <DialogHeader>
+                                      <DialogTitle className="text-[10px] uppercase tracking-[0.2em] text-[#666]">Xem phiên bản ({new Date(v.createdAt).toLocaleDateString()})</DialogTitle>
+                                    </DialogHeader>
+                                    <div className="mt-4 font-serif text-[#888] italic leading-relaxed whitespace-pre-wrap max-h-[60vh] overflow-y-auto pr-4">
+                                      {(() => {
+                                        try {
+                                          const contentObj = JSON.parse(v.content)
+                                          const getText = (node: any): string => {
+                                            if (node.type === 'text') return node.text || ''
+                                            if (node.content) return node.content.map(getText).join(node.type === 'paragraph' ? '\n' : ' ')
+                                            if (node.type === 'paragraph') return '\n'
+                                            return ''
+                                          }
+                                          return getText(contentObj).trim().substring(0, 2000) + (v.content.length > 2000 ? '...' : '')
+                                        } catch (e) {
+                                          return 'Không thể hiển thị nội dung.'
+                                        }
+                                      })()}
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
+
+                                <Dialog>
+                                  <DialogTrigger asChild>
+                                    <Button size="sm" variant="secondary" className="text-[10px] uppercase tracking-widest h-8 px-4 bg-[#262626] hover:bg-[#333]">Khôi phục</Button>
+                                  </DialogTrigger>
+                                  <DialogContent className="bg-[#1a1a1a] border-[#262626] text-[#d4d4d4]">
+                                    <DialogHeader>
+                                      <DialogTitle className="text-xl font-serif italic">Xác nhận khôi phục?</DialogTitle>
+                                    </DialogHeader>
+                                    <p className="text-sm text-[#888] py-4">Nội dung hiện tại của chương sẽ được ghi đè bởi phiên bản này. Bạn có muốn tiếp tục?</p>
+                                    <div className="flex justify-end gap-3 mt-4">
+                                       <Button variant="ghost" className="text-[10px] uppercase tracking-widest">Hủy</Button>
+                                       <Button onClick={() => restoreVersion(v.id, v.content)} className="bg-white text-black hover:bg-white/90 text-[10px] uppercase tracking-widest font-bold px-6">Xác nhận</Button>
+                                    </div>
+                                  </DialogContent>
+                                </Dialog>
                               </div>
                             </div>
                           ))}

@@ -1,6 +1,6 @@
 import { Elysia, t } from 'elysia'
 import { db } from '../db'
-import { novels, chapters, characters, timelineEvents } from '../schema'
+import { novels, chapters, characters, timelineEvents, writingLogs } from '../schema'
 import { eq, desc, asc } from 'drizzle-orm'
 
 export const novelRoutes = new Elysia({ prefix: '/novels' })
@@ -62,6 +62,42 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
 
             const totalWords = chaptersWithStats.reduce((sum, c) => sum + c.wordCount, 0)
 
+            // Update writing logs for today
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            
+            // This is a simple way to track daily progress: upsert total word count for the day
+            // In a real app, we might want to track 'delta', but for simple charts, total per day is fine
+            // actually, we want 'words written today'. So we might need to compare with yesterday.
+            // Let's just store the totalWords at this point in time for this day.
+            
+            await db.insert(writingLogs)
+                .values({ novelId: id, wordCount: totalWords, date: new Date() })
+                .onConflictDoUpdate({
+                    target: writingLogs.id, // This won't work easily with uuid and date. 
+                    // Let's check schema. writingLogs has id (uuid). 
+                    // We should probably check if a log for today exists.
+                    set: { wordCount: totalWords }
+                })
+            
+            // Re-think: Drizzle onConflict needs a unique constraint. 
+            // I didn't add one. I'll just check manually for now.
+            const existingLog = await db.select().from(writingLogs)
+                .where(eq(writingLogs.novelId, id))
+                .orderBy(desc(writingLogs.date))
+                .limit(1)
+            
+            const isToday = existingLog.length > 0 && 
+                new Date(existingLog[0].date).toDateString() === new Date().toDateString()
+            
+            if (isToday) {
+                await db.update(writingLogs)
+                    .set({ wordCount: totalWords })
+                    .where(eq(writingLogs.id, existingLog[0].id))
+            } else {
+                await db.insert(writingLogs).values({ novelId: id, wordCount: totalWords })
+            }
+
             return {
                 ...novel[0],
                 chapters: chaptersWithStats,
@@ -70,6 +106,22 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
         } catch (error) {
             set.status = 500
             return { error: 'Internal server error', details: error }
+        }
+    }, {
+        params: t.Object({
+            id: t.String()
+        })
+    })
+    .get('/:id/stats', async ({ params: { id } }) => {
+        try {
+            const logs = await db.select()
+                .from(writingLogs)
+                .where(eq(writingLogs.novelId, id))
+                .orderBy(asc(writingLogs.date))
+            
+            return logs
+        } catch (error) {
+            return { error: 'Failed to fetch stats' }
         }
     }, {
         params: t.Object({

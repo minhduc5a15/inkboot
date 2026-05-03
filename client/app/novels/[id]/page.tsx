@@ -111,6 +111,7 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
   const [novel, setNovel] = useState<any>(null)
   const [chapters, setChapters] = useState<Chapter[]>([])
   const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState<any[]>([])
 
   const sensors = useSensors(
     useSensor(PointerSensor),
@@ -127,6 +128,11 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
       const data = await res.json()
       setNovel(data)
       setChapters((data.chapters || []).sort((a: any, b: any) => a.order - b.order))
+
+      const statsRes = await fetch(`http://localhost:3000/novels/${id}/stats`)
+      if (statsRes.ok) {
+        setStats(await statsRes.json())
+      }
     } catch (error) {
       console.error(error)
     } finally {
@@ -204,6 +210,45 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
   const totalWords = novel.totalWords ?? 0;
   const progress = Math.min((totalWords / targetWords) * 100, 100);
 
+  // Calculate Streak and Daily Words
+  const getDailyStats = () => {
+    if (!stats || stats.length < 2) return { streak: 0, dailyWords: [], avgWords: 0 };
+    
+    const dailyDiffs = stats.map((log, i) => {
+      if (i === 0) return { date: log.date, words: 0 };
+      const diff = log.wordCount - stats[i-1].wordCount;
+      return { date: log.date, words: Math.max(0, diff) };
+    }).slice(-7);
+
+    let streak = 0;
+    const sortedStats = [...stats].sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime());
+    
+    let lastDate = new Date();
+    lastDate.setHours(0,0,0,0);
+
+    for (let i = 0; i < sortedStats.length; i++) {
+        const logDate = new Date(sortedStats[i].date);
+        logDate.setHours(0,0,0,0);
+        
+        const diffDays = Math.floor((lastDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
+        
+        if (diffDays <= 1) {
+            streak++;
+            lastDate = logDate;
+        } else {
+            break;
+        }
+    }
+
+    const avgWords = dailyDiffs.reduce((a, b) => a + b.words, 0) / (dailyDiffs.length || 1);
+    
+    return { streak, dailyWords: dailyDiffs, avgWords };
+  };
+
+  const { streak, dailyWords, avgWords } = getDailyStats();
+  const daysRemaining = avgWords > 0 ? Math.ceil((targetWords - totalWords) / avgWords) : Infinity;
+  const estCompletion = daysRemaining === Infinity ? 'N/A' : new Date(Date.now() + daysRemaining * 24 * 60 * 60 * 1000).toLocaleDateString();
+
   return (
     <div className="min-h-screen">
       <div className="max-w-5xl mx-auto p-12 space-y-16">
@@ -230,11 +275,12 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-12">
           {[
-            { label: 'TỔNG SỐ TỪ', value: (novel.totalWords ?? 0).toLocaleString() },
-            { label: 'THỜI GIAN ĐỌC', value: `~${Math.ceil((novel.totalWords ?? 0) / 200)} PHÚT` },
-            { label: 'SỐ CHƯƠNG', value: chapters.length },
+            { label: 'TỔNG SỐ TỪ', value: totalWords.toLocaleString() },
+            { label: 'CHUỖI VIẾT', value: `${streak} NGÀY` },
+            { label: 'TB MỖI NGÀY', value: Math.round(avgWords) },
+            { label: 'DỰ KIẾN XONG', value: estCompletion },
           ].map((stat, i) => (
             <div key={i} className="space-y-3">
               <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">{stat.label}</span>
@@ -244,13 +290,40 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
         </div>
 
         {/* Progress Section */}
-        <div className="space-y-6">
-          <div className="flex justify-between items-end">
-            <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">TIẾN ĐỘ BẢN THẢO</span>
-            <span className="text-2xl font-serif italic text-white opacity-90">{Math.round(progress)}%</span>
-          </div>
-          <Progress value={progress} className="h-0.5 bg-[#262626]" />
-          <p className="text-[9px] text-[#444] uppercase tracking-[0.2em] text-center font-bold">{(novel.totalWords ?? 0).toLocaleString()} / {targetWords.toLocaleString()} TỪ</p>
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-24">
+            <div className="space-y-8">
+                <div className="space-y-6">
+                    <div className="flex justify-between items-end">
+                        <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">TIẾN ĐỘ BẢN THẢO</span>
+                        <span className="text-2xl font-serif italic text-white opacity-90">{Math.round(progress)}%</span>
+                    </div>
+                    <Progress value={progress} className="h-0.5 bg-[#262626]" />
+                    <p className="text-[9px] text-[#444] uppercase tracking-[0.2em] text-center font-bold">{totalWords.toLocaleString()} / {targetWords.toLocaleString()} TỪ</p>
+                </div>
+            </div>
+
+            {/* Simple CSS Chart */}
+            <div className="space-y-6">
+                <span className="text-[10px] uppercase tracking-[0.3em] text-[#444] font-bold">HOẠT ĐỘNG 7 NGÀY QUA</span>
+                <div className="h-24 flex items-end gap-2">
+                    {dailyWords.map((day, i) => {
+                        const height = Math.max(10, Math.min(100, (day.words / (Math.max(...dailyWords.map(d => d.words)) || 1)) * 100));
+                        return (
+                            <div key={i} className="flex-1 flex flex-col items-center gap-2 group">
+                                <div 
+                                    className="w-full bg-[#262626] group-hover:bg-white/20 transition-all duration-500 rounded-t-sm relative"
+                                    style={{ height: `${height}%` }}
+                                >
+                                    <div className="absolute -top-6 left-1/2 -translate-x-1/2 text-[8px] text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                        {day.words}
+                                    </div>
+                                </div>
+                                <span className="text-[8px] text-[#444] font-bold">{new Date(day.date).toLocaleDateString('en', { weekday: 'short' }).toUpperCase()}</span>
+                            </div>
+                        )
+                    })}
+                </div>
+            </div>
         </div>
 
         {/* Chapters Section */}

@@ -35,6 +35,7 @@ export default function RootLayout({
     <html
       lang="en"
       className={`${geistSans.variable} ${geistMono.variable} ${lora.variable} h-full antialiased`}
+      suppressHydrationWarning
     >
       <body className="min-h-full" suppressHydrationWarning>
         <FocusProvider>

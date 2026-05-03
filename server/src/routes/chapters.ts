@@ -42,14 +42,35 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
     })
     .patch('/:id', async ({ params: { id }, body, set }) => {
         try {
+            const [oldChapter] = await db.select().from(chapters).where(eq(chapters.id, id)).limit(1)
+            if (!oldChapter) {
+                set.status = 404
+                return { error: 'Chapter not found' }
+            }
+
             const [updatedChapter] = await db.update(chapters)
                 .set({ ...body, updatedAt: new Date() })
                 .where(eq(chapters.id, id))
                 .returning()
 
-            if (!updatedChapter) {
-                set.status = 404
-                return { error: 'Chapter not found' }
+            // Auto-snapshot logic
+            if (body.content) {
+                const [lastVersion] = await db.select()
+                    .from(chapterVersions)
+                    .where(eq(chapterVersions.chapterId, id))
+                    .orderBy(desc(chapterVersions.createdAt))
+                    .limit(1)
+
+                const shouldSnapshot = !lastVersion || 
+                    (new Date().getTime() - new Date(lastVersion.createdAt).getTime() > 30 * 60 * 1000) ||
+                    (Math.abs((body.content.length || 0) - (lastVersion.content.length || 0)) > 500)
+
+                if (shouldSnapshot) {
+                    await db.insert(chapterVersions).values({
+                        chapterId: id,
+                        content: body.content
+                    })
+                }
             }
 
             return updatedChapter
@@ -65,6 +86,32 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
             title: t.Optional(t.String()),
             content: t.Optional(t.String()),
             order: t.Optional(t.Number())
+        })
+    })
+    .patch('/:id/restore', async ({ params: { id }, body, set }) => {
+        try {
+            const [version] = await db.select().from(chapterVersions).where(eq(chapterVersions.id, body.versionId)).limit(1)
+            if (!version) {
+                set.status = 404
+                return { error: 'Version not found' }
+            }
+
+            const [updatedChapter] = await db.update(chapters)
+                .set({ content: version.content, updatedAt: new Date() })
+                .where(eq(chapters.id, id))
+                .returning()
+
+            return updatedChapter
+        } catch (error) {
+            set.status = 500
+            return { error: 'Failed to restore chapter', details: error }
+        }
+    }, {
+        params: t.Object({
+            id: t.String()
+        }),
+        body: t.Object({
+            versionId: t.String()
         })
     })
     .delete('/:id', async ({ params: { id }, set }) => {

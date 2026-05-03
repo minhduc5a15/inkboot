@@ -61,3 +61,12 @@ export const chapterVersions = pgTable("chapter_versions", {
   content: text("content").notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const writingLogs = pgTable("writing_logs", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  novelId: uuid("novel_id")
+    .references(() => novels.id, { onDelete: "cascade" })
+    .notNull(),
+  wordCount: integer("word_count").notNull(),
+  date: timestamp("date").defaultNow().notNull(),
+});
