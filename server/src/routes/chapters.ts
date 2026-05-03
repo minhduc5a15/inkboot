@@ -55,15 +55,35 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
 
             // Auto-snapshot logic
             if (body.content) {
+                const calculateWords = (jsonStr: string | null): number => {
+                    if (!jsonStr) return 0
+                    try {
+                        const contentObj = JSON.parse(jsonStr)
+                        const getText = (node: any): string => {
+                            if (node.type === 'text') return node.text || ''
+                            if (node.content) return node.content.map(getText).join(' ')
+                            return ''
+                        }
+                        const text = getText(contentObj)
+                        return text.trim() ? text.trim().split(/\s+/).length : 0
+                    } catch {
+                        return 0
+                    }
+                }
+
                 const [lastVersion] = await db.select()
                     .from(chapterVersions)
                     .where(eq(chapterVersions.chapterId, id))
                     .orderBy(desc(chapterVersions.createdAt))
                     .limit(1)
 
+                const currentWordCount = calculateWords(body.content)
+                const lastWordCount = lastVersion ? calculateWords(lastVersion.content) : 0
+                const timeDiff = lastVersion ? (new Date().getTime() - new Date(lastVersion.createdAt).getTime()) : Infinity
+                
                 const shouldSnapshot = !lastVersion || 
-                    (new Date().getTime() - new Date(lastVersion.createdAt).getTime() > 30 * 60 * 1000) ||
-                    (Math.abs((body.content.length || 0) - (lastVersion.content.length || 0)) > 500)
+                    (timeDiff > 30 * 60 * 1000) ||
+                    (Math.abs(currentWordCount - lastWordCount) > 500)
 
                 if (shouldSnapshot) {
                     await db.insert(chapterVersions).values({

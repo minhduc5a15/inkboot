@@ -73,7 +73,7 @@ export default function Editor({ id, novelId, initialContent, title, order, char
 
   const fetchWorldEntities = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/world/novel/${novelId}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/world/novel/${novelId}`)
       const data = await res.json()
       setWorldEntities(data)
     } catch (error) {
@@ -89,7 +89,7 @@ export default function Editor({ id, novelId, initialContent, title, order, char
 
   const fetchVersions = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/chapters/${id}/versions`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${id}/versions`)
       const data = await res.json()
       setVersions(data)
     } catch (error) {
@@ -101,7 +101,7 @@ export default function Editor({ id, novelId, initialContent, title, order, char
     if (!editor) return
     try {
       const content = JSON.stringify(editor.getJSON())
-      const res = await fetch(`http://localhost:3000/chapters/${id}/versions`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${id}/versions`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),
@@ -117,7 +117,7 @@ export default function Editor({ id, novelId, initialContent, title, order, char
 
   const restoreVersion = async (versionId: string, versionContent: string) => {
     try {
-      const response = await fetch(`http://localhost:3000/chapters/${id}/restore`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${id}/restore`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ versionId }),
@@ -137,7 +137,7 @@ export default function Editor({ id, novelId, initialContent, title, order, char
   const debouncedSave = useDebouncedCallback(async (content: string) => {
     setSaveStatus('saving')
     try {
-      const response = await fetch(`http://localhost:3000/chapters/${id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ content }),

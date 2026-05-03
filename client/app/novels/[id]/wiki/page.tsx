@@ -34,8 +34,8 @@ export default function WikiPage({ params }: { params: Promise<{ id: string }> }
     setIsLoading(true)
     try {
       const [charRes, worldRes] = await Promise.all([
-        fetch(`http://localhost:3000/novels/${novelId}/characters`),
-        fetch(`http://localhost:3000/world/novel/${novelId}`)
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${novelId}/characters`),
+        fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/world/novel/${novelId}`)
       ])
       setCharacters(await charRes.json())
       setWorldEntities(await worldRes.json())
@@ -54,7 +54,7 @@ export default function WikiPage({ params }: { params: Promise<{ id: string }> }
     e.preventDefault()
     try {
       if (activeTab === 'characters') {
-        const res = await fetch('http://localhost:3000/characters', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/characters`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ name: newName, novelId }),
@@ -67,7 +67,7 @@ export default function WikiPage({ params }: { params: Promise<{ id: string }> }
           organizations: 'organization',
           lore: 'lore'
         }
-        const res = await fetch('http://localhost:3000/world', {
+        const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/world`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ 

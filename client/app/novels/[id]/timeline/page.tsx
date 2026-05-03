@@ -27,7 +27,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
 
   const fetchEvents = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/novels/${novelId}/timeline`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${novelId}/timeline`)
       const data = await res.json()
       setEvents(data)
     } catch (error) {
@@ -44,7 +44,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   const handleCreate = async (e: React.FormEvent) => {
     e.preventDefault()
     try {
-      const res = await fetch('http://localhost:3000/timeline', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/timeline`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...newEvent, novelId }),
@@ -62,7 +62,7 @@ export default function TimelinePage({ params }: { params: Promise<{ id: string 
   const handleDelete = async (id: string) => {
     if (!confirm('Xóa sự kiện này?')) return
     try {
-      const res = await fetch(`http://localhost:3000/timeline/${id}`, { method: 'DELETE' })
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/timeline/${id}`, { method: 'DELETE' })
       if (res.ok) fetchEvents()
     } catch (error) {
       console.error(error)

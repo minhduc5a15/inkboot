@@ -62,40 +62,29 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
 
             const totalWords = chaptersWithStats.reduce((sum, c) => sum + c.wordCount, 0)
 
-            // Update writing logs for today
-            const today = new Date()
-            today.setHours(0, 0, 0, 0)
-            
-            // This is a simple way to track daily progress: upsert total word count for the day
-            // In a real app, we might want to track 'delta', but for simple charts, total per day is fine
-            // actually, we want 'words written today'. So we might need to compare with yesterday.
-            // Let's just store the totalWords at this point in time for this day.
-            
-            await db.insert(writingLogs)
-                .values({ novelId: id, wordCount: totalWords, date: new Date() })
-                .onConflictDoUpdate({
-                    target: writingLogs.id, // This won't work easily with uuid and date. 
-                    // Let's check schema. writingLogs has id (uuid). 
-                    // We should probably check if a log for today exists.
-                    set: { wordCount: totalWords }
-                })
-            
-            // Re-think: Drizzle onConflict needs a unique constraint. 
-            // I didn't add one. I'll just check manually for now.
-            const existingLog = await db.select().from(writingLogs)
+            // Update writing logs for today - robust check
+            const existingLogs = await db.select().from(writingLogs)
                 .where(eq(writingLogs.novelId, id))
                 .orderBy(desc(writingLogs.date))
                 .limit(1)
             
-            const isToday = existingLog.length > 0 && 
-                new Date(existingLog[0].date).toDateString() === new Date().toDateString()
+            const lastLog = existingLogs[0]
+            const today = new Date()
+            today.setHours(0, 0, 0, 0)
+            
+            const isToday = lastLog && 
+                new Date(lastLog.date).setHours(0, 0, 0, 0) === today.getTime()
             
             if (isToday) {
                 await db.update(writingLogs)
                     .set({ wordCount: totalWords })
-                    .where(eq(writingLogs.id, existingLog[0].id))
+                    .where(eq(writingLogs.id, lastLog.id))
             } else {
-                await db.insert(writingLogs).values({ novelId: id, wordCount: totalWords })
+                await db.insert(writingLogs).values({ 
+                    novelId: id, 
+                    wordCount: totalWords,
+                    date: new Date() 
+                })
             }
 
             return {
@@ -215,32 +204,53 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
             novelChapters.forEach(chapter => {
                 fullContent += `## ${chapter.title}\n\n`
                 
-                // Simple Tiptap JSON to Text/Markdown converter
                 if (chapter.content) {
                     try {
                         const contentObj = JSON.parse(chapter.content)
-                        const extractText = (node: any): string => {
-                            if (node.type === 'text') return node.text
-                            if (node.content) return node.content.map(extractText).join('')
-                            if (node.type === 'paragraph') return extractText(node) + '\n\n'
-                            return ''
+                        
+                        const processNode = (node: any): string => {
+                            if (!node) return ''
+                            
+                            // Handle Marks (Bold, Italic, etc.)
+                            let text = node.text || ''
+                            if (node.marks) {
+                                node.marks.forEach((mark: any) => {
+                                    if (mark.type === 'bold') text = `**${text}**`
+                                    if (mark.type === 'italic') text = `*${text}*`
+                                    if (mark.type === 'underline') text = `<u>${text}</u>`
+                                    if (mark.type === 'strike') text = `~~${text}~~`
+                                    if (mark.type === 'code') text = `\`${text}\``
+                                })
+                            }
+
+                            // Handle Child Content
+                            const children = node.content ? node.content.map(processNode).join('') : ''
+                            
+                            // Handle Node Types
+                            switch (node.type) {
+                                case 'text': return text
+                                case 'paragraph': return `${children}\n\n`
+                                case 'heading': {
+                                    const level = node.attrs?.level || 1
+                                    return `${'#'.repeat(level + 2)} ${children}\n\n`
+                                }
+                                case 'bulletList': return `${children}\n`
+                                case 'orderedList': return `${children}\n`
+                                case 'listItem': return `- ${children}` // Simplification for both list types
+                                case 'blockquote': return `> ${children.trim().split('\n').join('\n> ')}\n\n`
+                                case 'horizontalRule': return `---\n\n`
+                                case 'hardBreak': return `\n`
+                                default: return children || text
+                            }
                         }
                         
                         if (contentObj.content) {
-                            fullContent += contentObj.content.map((n: any) => {
-                                if (n.type === 'paragraph') {
-                                    return (n.content || []).map((t: any) => t.text || '').join('') + '\n\n'
-                                }
-                                if (n.type === 'heading') {
-                                    const level = n.attrs?.level || 1
-                                    const hashes = '#'.repeat(level + 2)
-                                    return `${hashes} ${(n.content || []).map((t: any) => t.text || '').join('')}\n\n`
-                                }
-                                return ''
-                            }).join('')
+                            fullContent += contentObj.content.map(processNode).join('')
                         }
                     } catch (e) {
-                        fullContent += '[Lỗi khi xử lý nội dung chương]\n\n'
+                        // Fallback: extract raw text if JSON parsing fails
+                        const rawText = chapter.content.replace(/<[^>]*>/g, '').trim()
+                        fullContent += rawText ? `${rawText}\n\n` : '[Nội dung chương trống]\n\n'
                     }
                 }
                 fullContent += '\n---\n\n'

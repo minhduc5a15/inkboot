@@ -13,7 +13,7 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 
 async function getChapter(id: string) {
   try {
-    const res = await fetch(`http://localhost:3000/chapters/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${id}`, {
       cache: 'no-store',
     })
 
@@ -34,7 +34,7 @@ async function getChapter(id: string) {
 
 async function getCharacters(novelId: string) {
   try {
-    const res = await fetch(`http://localhost:3000/novels/${novelId}/characters`)
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${novelId}/characters`)
     if (!res.ok) return []
     return res.json()
   } catch (error) {

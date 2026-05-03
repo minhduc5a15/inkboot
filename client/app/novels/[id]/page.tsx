@@ -122,14 +122,14 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
 
   const fetchData = async () => {
     try {
-      const res = await fetch(`http://localhost:3000/novels/${id}`)
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${id}`)
       if (!res.ok) throw new Error('Failed to fetch novel')
       
       const data = await res.json()
       setNovel(data)
       setChapters((data.chapters || []).sort((a: any, b: any) => a.order - b.order))
 
-      const statsRes = await fetch(`http://localhost:3000/novels/${id}/stats`)
+      const statsRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${id}/stats`)
       if (statsRes.ok) {
         setStats(await statsRes.json())
       }
@@ -149,7 +149,7 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
     if (!title) return
 
     try {
-      const res = await fetch('http://localhost:3000/chapters', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -168,7 +168,7 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
   const deleteChapter = async (chapterId: string) => {
     if (!confirm('Bạn có chắc muốn xóa chương này?')) return
     try {
-      await fetch(`http://localhost:3000/chapters/${chapterId}`, { method: 'DELETE' })
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/chapters/${chapterId}`, { method: 'DELETE' })
       fetchData()
     } catch (error) {
       console.error(error)
@@ -185,7 +185,7 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
       setChapters(newChapters)
 
       try {
-        await fetch(`http://localhost:3000/novels/${id}/chapters/reorder`, {
+        await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${id}/chapters/reorder`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(
@@ -200,7 +200,7 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
   }
 
   const exportNovel = async (format: 'markdown' | 'text') => {
-    window.open(`http://localhost:3000/novels/${id}/export?format=${format}`, '_blank')
+    window.open(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${id}/export?format=${format}`, '_blank')
   }
 
   if (loading) return null
@@ -232,7 +232,12 @@ export default function NovelHub({ params }: { params: Promise<{ id: string }> }
         
         const diffDays = Math.floor((lastDate.getTime() - logDate.getTime()) / (1000 * 60 * 60 * 24));
         
-        if (diffDays <= 1) {
+        if (diffDays === 0) {
+            if (i === 0) streak = 1;
+            continue;
+        }
+        
+        if (diffDays === 1) {
             streak++;
             lastDate = logDate;
         } else {

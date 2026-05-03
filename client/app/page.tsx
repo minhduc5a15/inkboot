@@ -21,7 +21,7 @@ export default function Library() {
 
   const fetchNovels = async () => {
     try {
-      const res = await fetch('http://localhost:3000/novels')
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels`)
       const data = await res.json()
       setNovels(data)
     } catch (error) {
@@ -40,7 +40,7 @@ export default function Library() {
     if (!title) return
 
     try {
-      const res = await fetch('http://localhost:3000/novels', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ title, description: 'Một câu chuyện mới...' }),
@@ -54,7 +54,7 @@ export default function Library() {
   const deleteNovel = async (id: string) => {
     if (!confirm('Bạn có chắc muốn xóa tiểu thuyết này? Toàn bộ chương và dữ liệu sẽ mất.')) return
     try {
-      await fetch(`http://localhost:3000/novels/${id}`, { method: 'DELETE' })
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/novels/${id}`, { method: 'DELETE' })
       fetchNovels()
     } catch (error) {
       console.error(error)

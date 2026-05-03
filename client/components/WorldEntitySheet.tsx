@@ -33,7 +33,7 @@ export default function WorldEntitySheet({ entity, onSave, onDelete }: WorldEnti
   const handleSave = async () => {
     setIsSaving(true)
     try {
-      const response = await fetch(`http://localhost:3000/world/${entity.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/world/${entity.id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
@@ -53,7 +53,7 @@ export default function WorldEntitySheet({ entity, onSave, onDelete }: WorldEnti
     if (!confirm('Bạn có chắc muốn xóa thực thể này?')) return
     setIsDeleting(true)
     try {
-      const response = await fetch(`http://localhost:3000/world/${entity.id}`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000"}/world/${entity.id}`, {
         method: 'DELETE',
       })
       if (!response.ok) throw new Error('Failed to delete entity')
