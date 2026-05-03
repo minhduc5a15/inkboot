@@ -58,6 +58,7 @@ export default async function EditPage({ params }: { params: Promise<{ id: strin
       <div className="max-w-5xl mx-auto px-4 py-8">
         <Editor 
           id={id} 
+          novelId={chapter.novelId}
           initialContent={chapter.content} 
           title={chapter.title}
           order={chapter.order}

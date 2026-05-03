@@ -9,8 +9,14 @@ import { useState, useEffect } from 'react'
 import { 
   Bold, Italic, Underline as UnderlineIcon, List, 
   Save, CloudCheck, Loader2, Gauge, Clock, Target,
-  History, Eye, RotateCcw, Maximize, Minimize, Users
+  History, Eye, RotateCcw, Maximize, Minimize, Users,
+  Globe, Search as SearchIcon, MapPin, Shield, ScrollText
 } from 'lucide-react'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover"
 import {
   Sheet,
   SheetContent,
@@ -27,6 +33,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { motion, AnimatePresence } from 'motion/react'
 import { useFocus } from '@/lib/focus-context'
@@ -38,19 +45,41 @@ interface ChapterVersion {
   createdAt: string
 }
 
+interface WorldEntity {
+  id: string
+  name: string
+  type: string
+  description?: string | null
+  content?: string | null
+  tags?: string[] | null
+}
+
 interface EditorProps {
   id: string
+  novelId: string
   initialContent?: string
   title: string
   order: number
   characters: any[]
 }
 
-export default function Editor({ id, initialContent, title, order, characters }: EditorProps) {
+export default function Editor({ id, novelId, initialContent, title, order, characters }: EditorProps) {
   const { isFocusMode, toggleFocusMode } = useFocus()
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | 'error'>('saved')
   const [wordCount, setWordCount] = useState(0)
   const [versions, setVersions] = useState<ChapterVersion[]>([])
+  const [worldEntities, setWorldEntities] = useState<WorldEntity[]>([])
+  const [worldSearch, setWorldSearch] = useState('')
+
+  const fetchWorldEntities = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/world/novel/${novelId}`)
+      const data = await res.json()
+      setWorldEntities(data)
+    } catch (error) {
+      console.error('Failed to fetch world entities:', error)
+    }
+  }
 
   const calculateStats = (editor: any) => {
     const text = editor.getText()
@@ -120,6 +149,10 @@ export default function Editor({ id, initialContent, title, order, characters }:
       setSaveStatus('error')
     }
   }, 2000)
+
+  useEffect(() => {
+    fetchWorldEntities()
+  }, [novelId])
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -243,6 +276,81 @@ export default function Editor({ id, initialContent, title, order, characters }:
                                   <p className="text-sm text-[#888] italic">{char.appearance}</p>
                                 </div>
                               ))
+                            )}
+                          </div>
+                        </ScrollArea>
+                      </DialogContent>
+                    </Dialog>
+
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button onClick={fetchWorldEntities} variant="ghost" size="icon" className="h-8 w-8 text-[#666] hover:text-white hover:bg-white/5 transition-all">
+                          <Globe size={16} />
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="bg-[#1a1a1a] border-[#262626] text-[#d4d4d4] max-w-xl">
+                        <DialogHeader>
+                          <DialogTitle className="text-[10px] uppercase tracking-[0.2em] text-[#666]">Worldbuilding / Kiến thức</DialogTitle>
+                        </DialogHeader>
+                        <div className="relative mt-4">
+                            <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 text-[#444]" size={14} />
+                            <Input 
+                                placeholder="Tìm kiếm thực thể..." 
+                                value={worldSearch}
+                                onChange={(e) => setWorldSearch(e.target.value)}
+                                className="bg-[#161616] border-[#262626] pl-9 h-10 text-xs"
+                            />
+                        </div>
+                        <ScrollArea className="h-[50vh] pr-4 mt-4">
+                          <div className="space-y-4">
+                            {worldEntities
+                              .filter(e => e.name.toLowerCase().includes(worldSearch.toLowerCase()))
+                              .map((entity) => (
+                                <Popover key={entity.id}>
+                                  <PopoverTrigger asChild>
+                                    <div className="p-4 rounded border border-[#262626] bg-[#161616] hover:border-[#444] transition-all cursor-pointer group">
+                                      <div className="flex justify-between items-start mb-2">
+                                        <div className="flex items-center gap-2">
+                                          <div className="p-1.5 bg-[#262626] rounded text-[#888] group-hover:text-white">
+                                            {entity.type === 'location' ? <MapPin size={14} /> :
+                                             entity.type === 'organization' ? <Shield size={14} /> :
+                                             <ScrollText size={14} />}
+                                          </div>
+                                          <h3 className="font-serif italic text-lg text-white group-hover:underline">{entity.name}</h3>
+                                        </div>
+                                        <span className="text-[8px] uppercase tracking-widest text-[#444] font-bold border border-[#262626] px-1.5 py-0.5 rounded">
+                                            {entity.type}
+                                        </span>
+                                      </div>
+                                      <p className="text-xs text-[#666] italic line-clamp-2">{entity.description || 'Không có mô tả.'}</p>
+                                    </div>
+                                  </PopoverTrigger>
+                                  <PopoverContent className="w-80 bg-[#1a1a1a] border-[#262626] text-[#d4d4d4] p-4 shadow-2xl">
+                                    <div className="space-y-3">
+                                      <div className="flex items-center gap-2 border-b border-[#262626] pb-2">
+                                        <h4 className="font-serif italic text-white text-lg">{entity.name}</h4>
+                                      </div>
+                                      <p className="text-xs text-[#888] leading-relaxed italic font-serif">
+                                        {entity.description}
+                                      </p>
+                                      {entity.content && (
+                                        <div className="text-[12px] text-[#666] leading-relaxed whitespace-pre-wrap pt-2 border-t border-[#262626]">
+                                          {entity.content.substring(0, 300)}...
+                                        </div>
+                                      )}
+                                      <div className="flex flex-wrap gap-1 pt-2">
+                                        {entity.tags?.map(tag => (
+                                          <span key={tag} className="text-[8px] uppercase tracking-widest text-[#444] font-bold">
+                                            #{tag}
+                                          </span>
+                                        ))}
+                                      </div>
+                                    </div>
+                                  </PopoverContent>
+                                </Popover>
+                              ))}
+                            {worldEntities.length === 0 && (
+                                <p className="text-center text-[#666] text-xs py-8">Chưa có kiến thức thế giới nào.</p>
                             )}
                           </div>
                         </ScrollArea>

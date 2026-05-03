@@ -70,3 +70,25 @@ export const writingLogs = pgTable("writing_logs", {
   wordCount: integer("word_count").notNull(),
   date: timestamp("date").defaultNow().notNull(),
 });
+
+export const worldEntities = pgTable("world_entities", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  novelId: uuid("novel_id")
+    .references(() => novels.id, { onDelete: "cascade" })
+    .notNull(),
+  type: varchar("type", { length: 50 }).notNull(), // 'location', 'organization', 'lore', 'item'
+  name: varchar("name", { length: 255 }).notNull(),
+  description: text("description"),
+  content: text("content"), // Detailed notes
+  tags: text("tags").array(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const entityRelations = pgTable("entity_relations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  sourceEntityId: uuid("source_entity_id").notNull(),
+  targetEntityId: uuid("target_entity_id").notNull(),
+  relationType: varchar("relation_type", { length: 100 }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
