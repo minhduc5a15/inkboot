@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia'
 import { db } from '../db'
 import { worldEntities, entityRelations } from '../schema'
-import { eq, and, asc } from 'drizzle-orm'
+import { eq, and, asc, inArray } from 'drizzle-orm'
 
 export const worldRoutes = new Elysia({ prefix: '/world' })
     .post('/', async ({ body, set }) => {
@@ -67,6 +67,53 @@ export const worldRoutes = new Elysia({ prefix: '/world' })
         try {
             await db.delete(worldEntities).where(eq(worldEntities.id, id))
             return { message: 'Entity deleted' }
+        } catch (error) {
+            return { error: 'Delete failed' }
+        }
+    })
+    .post('/relations', async ({ body, set }) => {
+        try {
+            const [relation] = await db.insert(entityRelations).values(body).returning()
+            set.status = 201
+            return relation
+        } catch (error) {
+            set.status = 500
+            return { error: 'Failed to create relation', details: error }
+        }
+    }, {
+        body: t.Object({
+            sourceEntityId: t.String(),
+            targetEntityId: t.String(),
+            relationType: t.String()
+        })
+    })
+    .get('/relations/:novelId', async ({ params: { novelId } }) => {
+        try {
+            // This is slightly tricky as we need to find relations for entities belonging to this novel.
+            // But sourceEntityId and targetEntityId are UUIDs. 
+            // Let's assume for now we just want to fetch relations where source belongs to the novel.
+            // Or better, we join with worldEntities to ensure novelId matches.
+            
+            // For simplicity in this prototype, let's fetch all and filter or just rely on the UI 
+            // knowing which entities are in the novel.
+            // Actually, a better way is to fetch relations where source exists in worldEntities for that novel.
+            
+            // SQL-like: select * from entity_relations where source_entity_id in (select id from world_entities where novel_id = novelId)
+            
+            const entities = await db.select({ id: worldEntities.id }).from(worldEntities).where(eq(worldEntities.novelId, novelId))
+            const entityIds = entities.map(e => e.id)
+            
+            if (entityIds.length === 0) return []
+
+            return await db.select().from(entityRelations).where(inArray(entityRelations.sourceEntityId, entityIds))
+        } catch (error) {
+            return { error: 'Failed to fetch relations' }
+        }
+    })
+    .delete('/relations/:id', async ({ params: { id } }) => {
+        try {
+            await db.delete(entityRelations).where(eq(entityRelations.id, id))
+            return { message: 'Relation deleted' }
         } catch (error) {
             return { error: 'Delete failed' }
         }
