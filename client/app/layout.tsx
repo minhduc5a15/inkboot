@@ -22,7 +22,6 @@ export const metadata: Metadata = {
   description: 'A professional writing editor for authors.',
 };
 
-import Navbar from '@/components/Navbar';
 import { FocusProvider } from '@/lib/focus-context';
 import LayoutContent from '@/components/LayoutContent';
 import { Toaster } from '@/components/ui/sonner';

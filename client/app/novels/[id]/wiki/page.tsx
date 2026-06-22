@@ -11,7 +11,6 @@ import {
   Search as SearchIcon,
   ChevronLeft,
   Filter,
-  MoreVertical,
   Trash2,
   Edit2,
 } from 'lucide-react';
@@ -102,7 +101,7 @@ export default function WikiPage({
         toast.success('Đã xóa');
         fetchData();
       }
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xóa');
     }
   };

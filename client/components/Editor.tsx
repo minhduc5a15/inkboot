@@ -202,7 +202,7 @@ export default function Editor({
       if (!initialContent) return '';
       try {
         return JSON.parse(initialContent);
-      } catch (e) {
+      } catch {
         return '';
       }
     })(),
@@ -533,6 +533,7 @@ export default function Editor({
                                           return '\n';
                                         return '';
                                       };
+                                      const fullText = getText(contentObj);
                                       return (
                                         fullText.substring(0, 2000) +
                                         (fullText.length > 2000 ? '...' : '')

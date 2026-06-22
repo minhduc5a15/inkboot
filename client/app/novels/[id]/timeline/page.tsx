@@ -173,7 +173,7 @@ export default function PlotTrackerPage({
 }) {
   const { id: novelId } = use(params);
   const [events, setEvents] = useState<TimelineEvent[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
+
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [activeId, setActiveId] = useState<string | null>(null);
   const [editingEvent, setEditingEvent] = useState<TimelineEvent | null>(null);
@@ -207,8 +207,6 @@ export default function PlotTrackerPage({
     } catch (error) {
       console.error(error);
       toast.error('Không thể tải dữ liệu cốt truyện');
-    } finally {
-      setIsLoading(false);
     }
   }, [novelId]);
 

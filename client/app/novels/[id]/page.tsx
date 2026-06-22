@@ -48,11 +48,10 @@ interface Chapter {
 
 interface SortableChapterProps {
   chapter: Chapter;
-  novelId: string;
   onDelete: (id: string) => void;
 }
 
-function SortableChapter({ chapter, novelId, onDelete }: SortableChapterProps) {
+function SortableChapter({ chapter, onDelete }: SortableChapterProps) {
   const {
     attributes,
     listeners,
@@ -480,7 +479,6 @@ export default function NovelHub({
                   <SortableChapter
                     key={chapter.id}
                     chapter={chapter}
-                    novelId={id}
                     onDelete={confirmDelete}
                   />
                 ))}
