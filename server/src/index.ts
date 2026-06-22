@@ -12,7 +12,7 @@ import { plotBoardRoutes } from './routes/plotBoard';
 const app = new Elysia()
   .use(
     cors({
-      origin: 'http://localhost:3001',
+      origin: 'http://localhost:8000',
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     })
   )
