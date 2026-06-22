@@ -7,14 +7,8 @@ import {
   FileText,
   Trash2,
   Download,
-  ChevronRight,
-  BarChart3,
-  Clock,
-  BookOpen,
   Users,
   Calendar,
-  Settings,
-  MoreVertical,
   GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -125,10 +119,10 @@ export default function NovelHub({
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [novel, setNovel] = useState<any>(null);
+  const [novel, setNovel] = useState<Record<string, unknown> | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<any[]>([]);
+  const [stats, setStats] = useState<Array<Record<string, unknown>>>([]);
 
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
@@ -153,7 +147,9 @@ export default function NovelHub({
       const data = await res.json();
       setNovel(data);
       setChapters(
-        (data.chapters || []).sort((a: any, b: any) => a.order - b.order)
+        (data.chapters || []).sort(
+          (a: { order: number }, b: { order: number }) => a.order - b.order
+        )
       );
 
       const statsRes = await fetch(
@@ -295,11 +291,13 @@ export default function NovelHub({
   const streak = novel.streak || 0;
   const daysRemaining =
     avgWords > 0 ? Math.ceil((targetWords - totalWords) / avgWords) : Infinity;
+  // eslint-disable-next-line react-hooks/purity
+  const now = Date.now();
   const estCompletion =
     daysRemaining === Infinity
       ? 'N/A'
       : new Date(
-          Date.now() + daysRemaining * 24 * 60 * 60 * 1000
+          now + daysRemaining * 24 * 60 * 60 * 1000
         ).toLocaleDateString();
 
   return (

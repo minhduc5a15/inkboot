@@ -1,15 +1,7 @@
 'use client';
 
 import Link from 'next/link';
-import {
-  Book,
-  Users,
-  Calendar,
-  Settings,
-  Plus,
-  Library,
-  PanelRight,
-} from 'lucide-react';
+import { Book, Users, Calendar, Settings, Plus, Library } from 'lucide-react';
 import { usePathname } from 'next/navigation';
 import { useFocus } from '@/lib/focus-context';
 

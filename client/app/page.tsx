@@ -4,11 +4,9 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import {
   Plus,
-  Book,
   Trash2,
   ChevronRight,
   Library as LibraryIcon,
-  Search,
   FileText,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -48,6 +46,7 @@ export default function Library() {
   };
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchNovels();
   }, []);
 

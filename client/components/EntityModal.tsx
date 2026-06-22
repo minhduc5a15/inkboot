@@ -15,8 +15,6 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save, Trash2, Link as LinkIcon, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-import { motion, AnimatePresence } from 'motion/react';
-
 interface WorldEntity {
   id?: string;
   novelId: string;
@@ -79,7 +77,7 @@ export default function EntityModal({
   const isActuallyCharacter =
     isCharacter ||
     formData.type === 'character' ||
-    (entity as any)?.appearance !== undefined;
+    (entity as Record<string, unknown>)?.appearance !== undefined;
 
   const fetchRelations = useCallback(
     async (id: string) => {
@@ -91,7 +89,7 @@ export default function EntityModal({
           const data = await res.json();
           setRelations(data.filter((r: Relation) => r.sourceEntityId === id));
         }
-      } catch (error) {
+      } catch {
         console.error('Failed to fetch relations');
       }
     },
@@ -104,7 +102,6 @@ export default function EntityModal({
       setFormData(entity);
       if (entity.id) fetchRelations(entity.id);
     } else {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setFormData({
         novelId,
         type: isCharacter ? 'character' : 'location',
@@ -160,7 +157,7 @@ export default function EntityModal({
       toast.success(entity?.id ? 'Đã cập nhật' : 'Đã tạo mới');
       onSuccess();
       onClose();
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi lưu');
     } finally {
       setIsSaving(false);
@@ -187,7 +184,7 @@ export default function EntityModal({
         setNewRelation({ targetId: '', type: 'belongs to' });
         toast.success('Đã thêm liên kết');
       }
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi thêm liên kết');
     }
   };
@@ -201,7 +198,7 @@ export default function EntityModal({
         }
       );
       if (res.ok && entity?.id) fetchRelations(entity.id);
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi xóa liên kết');
     }
   };

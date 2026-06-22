@@ -1,15 +1,5 @@
 import Editor from '@/components/Editor';
 import { notFound } from 'next/navigation';
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog';
-import { Button } from '@/components/ui/button';
-import { Users, Info } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
 
 async function getChapter(id: string) {
   try {

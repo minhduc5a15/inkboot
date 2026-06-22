@@ -50,7 +50,7 @@ export const PlotCard: React.FC<PlotCardProps> = ({ card, onClick }) => {
     >
       <Card
         className={`bg-zinc-900 border-zinc-800 hover:border-zinc-700 cursor-grab active:cursor-grabbing transition-colors ${isDragging ? 'ring-2 ring-blue-500/50 shadow-lg' : ''}`}
-        onClick={(e) => {
+        onClick={() => {
           // Prevent drag from triggering click if it was a drag
           if (
             transform &&

@@ -5,22 +5,16 @@ import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
 import { useDebouncedCallback } from 'use-debounce';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
+import type { Editor as EditorType } from '@tiptap/react';
 import {
   Bold,
   Italic,
-  Underline as UnderlineIcon,
   List,
   Save,
   CloudCheck,
   Loader2,
-  Gauge,
-  Clock,
-  Target,
   History,
-  Eye,
-  RotateCcw,
-  Maximize,
   Minimize,
   Users,
   Globe,
@@ -37,7 +31,6 @@ import {
 import {
   Sheet,
   SheetContent,
-  SheetDescription,
   SheetHeader,
   SheetTitle,
   SheetTrigger,
@@ -77,7 +70,9 @@ interface EditorProps {
   initialContent?: string;
   title: string;
   order: number;
-  characters: any[];
+  characters: Array<
+    Record<string, unknown> & { id: string; name: string; appearance?: string }
+  >;
 }
 
 export default function Editor({
@@ -97,35 +92,35 @@ export default function Editor({
   const [worldEntities, setWorldEntities] = useState<WorldEntity[]>([]);
   const [worldSearch, setWorldSearch] = useState('');
 
-  const fetchWorldEntities = async () => {
+  const fetchWorldEntities = useCallback(async () => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/world/novel/${novelId}`
       );
       const data = await res.json();
       setWorldEntities(data);
-    } catch (error) {
-      console.error('Failed to fetch world entities:', error);
+    } catch {
+      console.error('Failed to fetch world entities');
     }
-  };
+  }, [novelId]);
 
-  const calculateStats = (editor: any) => {
+  const calculateStats = (editor: EditorType) => {
     const text = editor.getText();
     const words = text.trim() ? text.trim().split(/\s+/).length : 0;
     setWordCount(words);
   };
 
-  const fetchVersions = async () => {
+  const fetchVersions = useCallback(async () => {
     try {
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}/versions`
       );
       const data = await res.json();
       setVersions(data);
-    } catch (error) {
-      console.error('Failed to fetch versions:', error);
+    } catch {
+      console.error('Failed to fetch versions');
     }
-  };
+  }, [id]);
 
   const saveSnapshot = async () => {
     if (!editor) return;
@@ -143,7 +138,7 @@ export default function Editor({
         toast.success('Đã lưu phiên bản mới');
         fetchVersions();
       }
-    } catch (error) {
+    } catch {
       toast.error('Không thể lưu bản nháp');
     }
   };
@@ -165,7 +160,7 @@ export default function Editor({
         setSaveStatus('saved');
         toast.success('Đã khôi phục thành công');
       }
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi khôi phục');
     }
   };
@@ -190,8 +185,9 @@ export default function Editor({
   }, 2000);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchWorldEntities();
-  }, [novelId]);
+  }, [fetchWorldEntities]);
 
   const editor = useEditor({
     immediatelyRender: false,
@@ -324,19 +320,27 @@ export default function Editor({
                             Chưa có nhân vật nào.
                           </p>
                         ) : (
-                          characters.map((char: any) => (
-                            <div
-                              key={char.id}
-                              className="space-y-2 pb-4 border-b border-zinc-800 last:border-0"
-                            >
-                              <h3 className="font-serif italic text-lg text-white">
-                                {char.name}
-                              </h3>
-                              <p className="text-sm text-zinc-400 italic">
-                                {char.appearance}
-                              </p>
-                            </div>
-                          ))
+                          characters.map(
+                            (
+                              char: Record<string, unknown> & {
+                                id: string;
+                                name: string;
+                                appearance?: string;
+                              }
+                            ) => (
+                              <div
+                                key={char.id}
+                                className="space-y-2 pb-4 border-b border-zinc-800 last:border-0"
+                              >
+                                <h3 className="font-serif italic text-lg text-white">
+                                  {char.name}
+                                </h3>
+                                <p className="text-sm text-zinc-400 italic">
+                                  {char.appearance}
+                                </p>
+                              </div>
+                            )
+                          )
                         )}
                       </div>
                     </ScrollArea>
@@ -508,12 +512,18 @@ export default function Editor({
                                   {(() => {
                                     try {
                                       const contentObj = JSON.parse(v.content);
-                                      const getText = (node: any): string => {
+                                      const getText = (
+                                        node: Record<string, unknown>
+                                      ): string => {
                                         if (node.type === 'text')
-                                          return node.text || '';
-                                        if (node.content)
+                                          return (node.text as string) || '';
+                                        if (Array.isArray(node.content))
                                           return node.content
-                                            .map(getText)
+                                            .map((n) =>
+                                              getText(
+                                                n as Record<string, unknown>
+                                              )
+                                            )
                                             .join(
                                               node.type === 'paragraph'
                                                 ? '\n'
@@ -524,12 +534,10 @@ export default function Editor({
                                         return '';
                                       };
                                       return (
-                                        getText(contentObj)
-                                          .trim()
-                                          .substring(0, 2000) +
-                                        (v.content.length > 2000 ? '...' : '')
+                                        fullText.substring(0, 2000) +
+                                        (fullText.length > 2000 ? '...' : '')
                                       );
-                                    } catch (e) {
+                                    } catch {
                                       return 'Không thể hiển thị nội dung.';
                                     }
                                   })()}

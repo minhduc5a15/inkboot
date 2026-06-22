@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import {
   DndContext,
   closestCenter,
@@ -66,24 +66,25 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
     })
   );
 
-  const fetchCards = React.useCallback(async () => {
+  const fetchCards = useCallback(async () => {
     try {
       setIsLoading(true);
       const res = await fetch(
         `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board`
       );
-      if (!res.ok) throw new Error('Failed to fetch cards');
-      const data = await res.json();
-      setCards(data);
-    } catch (error) {
-      toast.error('Could not load plot board');
-      console.error(error);
+      if (res.ok) {
+        const data = await res.json();
+        setCards(data);
+      }
+    } catch {
+      console.error('Failed to fetch plot cards');
     } finally {
       setIsLoading(false);
     }
   }, [novelId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchCards();
   }, [fetchCards]);
 
@@ -209,7 +210,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
         }
       );
       if (!res.ok) throw new Error('Reorder failed');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save order');
       fetchCards(); // Revert on fail
     }
@@ -269,8 +270,8 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
         if (!res.ok) throw new Error('Update failed');
         toast.success('Event updated');
       }
-    } catch (error) {
-      toast.error('Failed to save event');
+    } catch {
+      toast.error('Lỗi thêm/cập nhật thẻ');
       fetchCards();
     }
   };
@@ -298,8 +299,8 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
       if (!res.ok) throw new Error('Delete failed');
       toast.success('Event deleted');
       setDeletingCardId(null);
-    } catch (error) {
-      toast.error('Failed to delete event');
+    } catch {
+      toast.error('Lỗi xóa thẻ');
       fetchCards();
     }
   };

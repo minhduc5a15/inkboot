@@ -38,16 +38,11 @@ export const PlotCardDialog: React.FC<PlotCardDialogProps> = ({
     if (card && isOpen) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle(card.title || '');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDescription(card.description || '');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setAct(card.act || 'act1');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setNotes(card.foreshadowingNotes || '');
     } else if (isOpen && isCreating) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setTitle('');
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setDescription('');
       // act is set by the parent usually when creating
     }

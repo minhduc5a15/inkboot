@@ -38,6 +38,7 @@ export const PromptDialog: React.FC<PromptDialogProps> = ({
   // Reset value when dialog opens
   useEffect(() => {
     if (isOpen) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setValue(defaultValue);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

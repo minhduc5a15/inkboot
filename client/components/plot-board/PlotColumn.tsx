@@ -7,7 +7,7 @@ import {
 import { PlotCard, PlotCardData } from './PlotCard';
 import { Button } from '@/components/ui/button';
 import { Plus } from 'lucide-react';
-import { ScrollArea } from '@/components/ui/scroll-area';
+import {} from '@/components/ui/scroll-area';
 
 interface PlotColumnProps {
   id: string;

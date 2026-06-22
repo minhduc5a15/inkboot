@@ -2,13 +2,11 @@
 
 import { useState, useEffect, use, useCallback } from 'react';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogFooter,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
@@ -17,11 +15,9 @@ import { Textarea } from '@/components/ui/textarea';
 import {
   Plus,
   History,
-  Calendar,
   Trash2,
   ArrowLeft,
   GripVertical,
-  MoreVertical,
   Edit2,
 } from 'lucide-react';
 import Link from 'next/link';
@@ -217,6 +213,7 @@ export default function PlotTrackerPage({
   }, [novelId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchEvents();
   }, [fetchEvents]);
 
@@ -287,7 +284,7 @@ export default function PlotTrackerPage({
     }
   };
 
-  const handleDragStart = (event: any) => {
+  const handleDragStart = (event: { active: { id: string } }) => {
     setActiveId(event.active.id);
   };
 
@@ -499,7 +496,10 @@ export default function PlotTrackerPage({
                   <select
                     value={formData.type}
                     onChange={(e) =>
-                      setFormData({ ...formData, type: e.target.value as any })
+                      setFormData({
+                        ...formData,
+                        type: e.target.value as TimelineEvent['type'],
+                      })
                     }
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-md h-10 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all appearance-none cursor-pointer"
                   >
@@ -517,7 +517,10 @@ export default function PlotTrackerPage({
                   <select
                     value={formData.arc}
                     onChange={(e) =>
-                      setFormData({ ...formData, arc: e.target.value as any })
+                      setFormData({
+                        ...formData,
+                        arc: e.target.value as TimelineEvent['arc'],
+                      })
                     }
                     className="w-full bg-zinc-900 border border-zinc-800 rounded-md h-10 px-3 text-xs focus:outline-none focus:ring-1 focus:ring-zinc-600 transition-all appearance-none cursor-pointer"
                   >

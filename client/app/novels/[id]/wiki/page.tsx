@@ -58,13 +58,12 @@ export default function WikiPage({
   const [worldEntities, setWorldEntities] = useState<WorldEntity[]>([]);
   const [relations, setRelations] = useState<Relation[]>([]);
   const [search, setSearch] = useState('');
-  const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedEntity, setSelectedEntity] = useState<WorldEntity | null>(
     null
   );
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     try {
       const [charRes, worldRes, relRes] = await Promise.all([
         fetch(
@@ -81,16 +80,15 @@ export default function WikiPage({
       if (charRes.ok) setCharacters(await charRes.json());
       if (worldRes.ok) setWorldEntities(await worldRes.json());
       if (relRes.ok) setRelations(await relRes.json());
-    } catch (error) {
+    } catch {
       toast.error('Lỗi khi tải dữ liệu Wiki');
-    } finally {
-      setLoading(false);
     }
-  };
+  }, [novelId]);
 
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     fetchData();
-  }, [novelId]);
+  }, [fetchData]);
 
   const deleteEntity = async (id: string, isCharacter: boolean) => {
     if (!confirm('Xóa thực thể này?')) return;
@@ -141,6 +139,7 @@ export default function WikiPage({
     data,
     isCharacter = false,
   }: {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     data: any;
     isCharacter?: boolean;
   }) => (
@@ -374,7 +373,7 @@ export default function WikiPage({
                         .map((e) => <EntityCard key={e.id} data={e} />)}
                   </motion.div>
 
-                  {filteredEntities(tab as any).length === 0 && (
+                  {filteredEntities(tab as string).length === 0 && (
                     <div className="py-24 text-center space-y-4">
                       <p className="text-zinc-600 font-serif italic text-xl">
                         Chưa có dữ liệu cho mục này...

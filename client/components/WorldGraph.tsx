@@ -157,7 +157,6 @@ export default function WorldGraph({
   React.useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setNodes(initialNodes);
-    // eslint-disable-next-line react-hooks/set-state-in-effect
     setEdges(initialEdges);
   }, [initialNodes, initialEdges]);
 

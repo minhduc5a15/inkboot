@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
-import { Loader2, Save, Trash2, Tag } from 'lucide-react';
+import { Loader2, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
@@ -51,7 +51,7 @@ export default function WorldEntitySheet({
       const updated = await response.json();
       onSave?.(updated);
       toast.success('Changes saved');
-    } catch (error) {
+    } catch {
       toast.error('Failed to save');
     } finally {
       setIsSaving(false);
@@ -71,8 +71,8 @@ export default function WorldEntitySheet({
       if (!response.ok) throw new Error('Failed to delete entity');
       onDelete?.(entity.id);
       toast.success('Deleted successfully');
-    } catch (error) {
-      toast.error('Failed to delete');
+    } catch {
+      toast.error('Lỗi khi xóa liên kết');
     } finally {
       setIsDeleting(false);
     }
