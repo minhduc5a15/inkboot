@@ -193,7 +193,7 @@ export default function PlotTrackerPage({
   const fetchEvents = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/timeline`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${novelId}/timeline`
       );
       const data = await res.json();
       setEvents(data);
@@ -234,8 +234,8 @@ export default function PlotTrackerPage({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     const url = editingEvent
-      ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/timeline/${editingEvent.id}`
-      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/timeline`;
+      ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/timeline/${editingEvent.id}`
+      : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/timeline`;
 
     const method = editingEvent ? 'PATCH' : 'POST';
 
@@ -262,7 +262,7 @@ export default function PlotTrackerPage({
     if (!confirm('Xóa sự kiện này?')) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/timeline/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/timeline/${id}`,
         { method: 'DELETE' }
       );
       if (res.ok) {
@@ -333,7 +333,7 @@ export default function PlotTrackerPage({
     // Finalize the update to the server
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/timeline/${activeEvent.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/timeline/${activeEvent.id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },

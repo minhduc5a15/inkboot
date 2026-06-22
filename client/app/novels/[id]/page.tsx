@@ -133,7 +133,7 @@ export default function NovelDashboard({
   const fetchData = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}`
       );
       if (!res.ok) throw new Error('Failed to fetch novel');
 
@@ -146,7 +146,7 @@ export default function NovelDashboard({
       );
 
       const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/stats`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/stats`
       );
       if (statsRes.ok) {
         setStats(await statsRes.json());
@@ -166,7 +166,7 @@ export default function NovelDashboard({
     setIsPromptOpen(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -189,7 +189,7 @@ export default function NovelDashboard({
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${deletingChapterId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${deletingChapterId}`,
         { method: 'DELETE' }
       );
       setDeletingChapterId(null);
@@ -215,7 +215,7 @@ export default function NovelDashboard({
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/chapters/reorder`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/chapters/reorder`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -240,7 +240,7 @@ export default function NovelDashboard({
 
   const exportNovel = async (format: 'markdown' | 'text') => {
     window.open(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/export?format=${format}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/export?format=${format}`,
       '_blank'
     );
   };

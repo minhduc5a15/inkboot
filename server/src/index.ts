@@ -24,7 +24,7 @@ const app = new Elysia()
   .use(searchRoutes)
   .use(plotBoardRoutes)
   .get('/', () => 'Inkboot API is running')
-  .listen(3000);
+  .listen(4000);
 
 console.log(
   `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`

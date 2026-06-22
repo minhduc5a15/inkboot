@@ -27,7 +27,7 @@ export default function Library() {
   const fetchNovels = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`
       );
       const data = await res.json();
       setNovels(data);
@@ -47,7 +47,7 @@ export default function Library() {
     setIsPromptOpen(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -65,7 +65,7 @@ export default function Library() {
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${deletingNovelId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${deletingNovelId}`,
         { method: 'DELETE' }
       );
       setDeletingNovelId(null);

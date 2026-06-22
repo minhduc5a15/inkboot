@@ -4,7 +4,7 @@ import { notFound } from 'next/navigation';
 async function getChapter(id: string) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}`,
       {
         cache: 'no-store',
       }
@@ -28,7 +28,7 @@ async function getChapter(id: string) {
 async function getCharacters(novelId: string) {
   try {
     const res = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/characters`
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${novelId}/characters`
     );
     if (!res.ok) return [];
     return res.json();

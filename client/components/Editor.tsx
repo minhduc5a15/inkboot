@@ -81,7 +81,7 @@ export default function Editor({
   const fetchWorldEntities = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/world/novel/${novelId}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/novel/${novelId}`
       );
       const data = await res.json();
       setWorldEntities(data);
@@ -99,7 +99,7 @@ export default function Editor({
   const fetchVersions = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}/versions`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/versions`
       );
       const data = await res.json();
       setVersions(data);
@@ -113,7 +113,7 @@ export default function Editor({
     try {
       const content = JSON.stringify(editor.getJSON());
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}/versions`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -132,7 +132,7 @@ export default function Editor({
   const restoreVersion = async (versionId: string, versionContent: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}/restore`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/restore`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -155,7 +155,7 @@ export default function Editor({
     setSaveStatus('saving');
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
