@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { db } from '../db';
 import { plotCards, plotCardWikiRelations, worldEntities } from '../schema';
-import { eq, desc, asc, inArray } from 'drizzle-orm';
+import { eq, desc, asc, inArray, and } from 'drizzle-orm';
 
 export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
   .get('/', async ({ params: { id }, set }) => {
@@ -53,20 +53,10 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
   })
   .post('/cards', async ({ params: { id }, body, set }) => {
     try {
-      // Determine the next position for the specific act
-      const existingCardsInAct = await db
-        .select({ position: plotCards.position })
-        .from(plotCards)
-        .where(eq(plotCards.novelId, id))
-        .orderBy(desc(plotCards.position));
-        
-      const actCards = existingCardsInAct; // Needs proper filtering, let's just get max
-      // Actually we need to filter by act inside the DB query:
-      
       const maxPositionCard = await db
         .select({ position: plotCards.position })
         .from(plotCards)
-        .where(eq(plotCards.act, body.act))
+        .where(and(eq(plotCards.novelId, id), eq(plotCards.act, body.act)))
         .orderBy(desc(plotCards.position))
         .limit(1);
         
@@ -81,6 +71,7 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
         foreshadowingNotes: body.foreshadowingNotes,
       }).returning();
 
+      let fetchedEntities: typeof worldEntities.$inferSelect[] = [];
       if (body.linkedEntityIds && body.linkedEntityIds.length > 0) {
         await db.insert(plotCardWikiRelations).values(
           body.linkedEntityIds.map(entityId => ({
@@ -88,11 +79,16 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
             entityId,
           }))
         );
+
+        fetchedEntities = await db
+          .select()
+          .from(worldEntities)
+          .where(inArray(worldEntities.id, body.linkedEntityIds));
       }
 
       return {
         ...newCard,
-        linkedEntities: [] // To be fully correct, we would fetch them, but for POST response this is usually fine
+        linkedEntities: fetchedEntities
       };
 
     } catch (error) {
