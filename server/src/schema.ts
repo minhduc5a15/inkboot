@@ -45,6 +45,8 @@ export const timelineEvents = pgTable("timeline_events", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   content: text("content"),
+  type: varchar("type", { length: 50 }).default("event").notNull(), // 'event', 'climax', 'twist', 'resolution'
+  arc: varchar("arc", { length: 50 }).default("act_1").notNull(), // 'act_1', 'act_2_part_1', 'act_2_part_2', 'act_3'
   datePoint: varchar("date_point", { length: 255 }), // Flexible date string like "Spring, Year 12"
   novelId: uuid("novel_id")
     .references(() => novels.id, { onDelete: "cascade" })
@@ -92,3 +94,28 @@ export const entityRelations = pgTable("entity_relations", {
   relationType: varchar("relation_type", { length: 100 }).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
+
+export const plotCards = pgTable("plot_cards", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  novelId: uuid("novel_id")
+    .references(() => novels.id, { onDelete: "cascade" })
+    .notNull(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  act: varchar("act", { length: 50 }).notNull(), // 'act1', 'act2a', 'act2b', 'act3'
+  position: integer("position").notNull(),
+  foreshadowingNotes: text("foreshadowing_notes"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const plotCardWikiRelations = pgTable("plot_card_wiki_relations", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  plotCardId: uuid("plot_card_id")
+    .references(() => plotCards.id, { onDelete: "cascade" })
+    .notNull(),
+  entityId: uuid("entity_id")
+    .references(() => worldEntities.id, { onDelete: "cascade" })
+    .notNull(),
+});
+

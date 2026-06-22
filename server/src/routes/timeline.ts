@@ -21,6 +21,8 @@ export const timelineRoutes = new Elysia({ prefix: '/timeline' })
             title: t.String(),
             content: t.Optional(t.String()),
             datePoint: t.Optional(t.String()),
+            type: t.Optional(t.String()),
+            arc: t.Optional(t.String()),
             novelId: t.String()
         })
     })
@@ -48,7 +50,9 @@ export const timelineRoutes = new Elysia({ prefix: '/timeline' })
         body: t.Object({
             title: t.Optional(t.String()),
             content: t.Optional(t.String()),
-            datePoint: t.Optional(t.String())
+            datePoint: t.Optional(t.String()),
+            type: t.Optional(t.String()),
+            arc: t.Optional(t.String())
         })
     })
     .delete('/:id', async ({ params: { id }, set }) => {

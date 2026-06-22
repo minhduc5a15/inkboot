@@ -1,30 +1,31 @@
-import type { Metadata } from "next";
-import { Geist, Geist_Mono, Lora } from "next/font/google";
-import "./globals.css";
+import type { Metadata } from 'next';
+import { Geist, Geist_Mono, Lora } from 'next/font/google';
+import './globals.css';
 
 const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+  variable: '--font-geist-sans',
+  subsets: ['latin'],
 });
 
 const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+  variable: '--font-geist-mono',
+  subsets: ['latin'],
 });
 
 const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
+  variable: '--font-lora',
+  subsets: ['latin'],
 });
 
 export const metadata: Metadata = {
-  title: "Inkboot - Professional Writing Editor",
-  description: "A professional writing editor for authors.",
+  title: 'Inkboot - Professional Writing Editor',
+  description: 'A professional writing editor for authors.',
 };
 
-import Navbar from "@/components/Navbar";
-import { FocusProvider } from "@/lib/focus-context";
-import LayoutContent from "@/components/LayoutContent";
+import Navbar from '@/components/Navbar';
+import { FocusProvider } from '@/lib/focus-context';
+import LayoutContent from '@/components/LayoutContent';
+import { Toaster } from '@/components/ui/sonner';
 
 export default function RootLayout({
   children,
@@ -39,9 +40,8 @@ export default function RootLayout({
     >
       <body className="min-h-full" suppressHydrationWarning>
         <FocusProvider>
-          <LayoutContent>
-            {children}
-          </LayoutContent>
+          <LayoutContent>{children}</LayoutContent>
+          <Toaster />
         </FocusProvider>
       </body>
     </html>

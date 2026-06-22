@@ -16,7 +16,7 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
     }, {
         body: t.Object({
             title: t.String(),
-            content: t.String(),
+            content: t.String({ maxLength: 5000000 }),
             order: t.Number(),
             novelId: t.String()
         })
@@ -104,7 +104,7 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
         }),
         body: t.Object({
             title: t.Optional(t.String()),
-            content: t.Optional(t.String()),
+            content: t.Optional(t.String({ maxLength: 5000000 })),
             order: t.Optional(t.Number())
         })
     })
@@ -172,7 +172,7 @@ export const chapterRoutes = new Elysia({ prefix: '/chapters' })
             id: t.String()
         }),
         body: t.Object({
-            content: t.String()
+            content: t.String({ maxLength: 5000000 })
         })
     })
     .get('/:id/versions', async ({ params: { id } }) => {
