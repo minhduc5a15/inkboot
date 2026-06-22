@@ -48,21 +48,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { motion, AnimatePresence } from 'motion/react';
 import { useFocus } from '@/lib/focus-context';
 import { toast } from 'sonner';
-
-interface ChapterVersion {
-  id: string;
-  content: string;
-  createdAt: string;
-}
-
-interface WorldEntity {
-  id: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  content?: string | null;
-  tags?: string[] | null;
-}
+import { ChapterVersion, WorldEntity } from '@/types';
 
 interface EditorProps {
   id: string;

@@ -8,16 +8,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Save, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-
-interface WorldEntity {
-  id: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  content?: string | null;
-  tags?: string[] | null;
-  novelId: string;
-}
+import { WorldEntity } from '@/types';
 
 interface WorldEntitySheetProps {
   entity: WorldEntity;

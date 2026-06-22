@@ -28,6 +28,7 @@ import {
   PointerSensor,
   useSensor,
   useSensors,
+  DragStartEvent,
   DragEndEvent,
   DragOverEvent,
   DragOverlay,
@@ -43,15 +44,7 @@ import {
 import { CSS } from '@dnd-kit/utilities';
 import { toast } from 'sonner';
 
-interface TimelineEvent {
-  id: string;
-  title: string;
-  content?: string | null;
-  datePoint?: string | null;
-  type: 'event' | 'climax' | 'twist' | 'resolution';
-  arc: 'act_1' | 'act_2_part_1' | 'act_2_part_2' | 'act_3';
-  novelId: string;
-}
+import { TimelineEvent } from '@/types';
 
 const COLUMNS = [
   { id: 'act_1', title: 'Hồi 1: Mở Đầu' },
@@ -282,8 +275,8 @@ export default function PlotTrackerPage({
     }
   };
 
-  const handleDragStart = (event: { active: { id: string } }) => {
-    setActiveId(event.active.id);
+  const handleDragStart = (event: DragStartEvent) => {
+    setActiveId(event.active.id as string);
   };
 
   const handleDragOver = (event: DragOverEvent) => {

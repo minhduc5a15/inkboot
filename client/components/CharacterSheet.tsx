@@ -7,16 +7,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Label } from '@/components/ui/label';
 import { Loader2, Save, Trash2 } from 'lucide-react';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
-
-interface Character {
-  id: string;
-  name: string;
-  age?: number | null;
-  appearance?: string | null;
-  personality?: string | null;
-  history?: string | null;
-  novelId: string;
-}
+import { Character } from '@/types';
 
 interface CharacterSheetProps {
   character: Character;

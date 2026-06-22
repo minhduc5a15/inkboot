@@ -1,4 +1,3 @@
-import React from 'react';
 import { PlotBoard } from '@/components/plot-board/PlotBoard';
 import { ArrowLeft } from 'lucide-react';
 import Link from 'next/link';

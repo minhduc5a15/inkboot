@@ -14,13 +14,7 @@ import { motion } from 'motion/react';
 import { PromptDialog } from '@/components/ui/prompt-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 
-interface Novel {
-  id: string;
-  title: string;
-  description: string | null;
-  totalWords: number;
-  updatedAt: string;
-}
+import { Novel } from '@/types';
 
 export default function Library() {
   const [novels, setNovels] = useState<Novel[]>([]);

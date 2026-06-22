@@ -15,31 +15,15 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Loader2, Save, Trash2, Link as LinkIcon, Plus, X } from 'lucide-react';
 import { toast } from 'sonner';
-interface WorldEntity {
-  id?: string;
-  novelId: string;
-  type: string;
-  name: string;
-  description?: string | null;
-  content?: string | null;
-  tags?: string[] | null;
-  // Character specific fields
-  appearance?: string | null;
-  personality?: string | null;
-  history?: string | null;
-}
+import { WorldEntity, Relation, Character } from '@/types';
 
-interface Relation {
-  id: string;
-  sourceEntityId: string;
-  targetEntityId: string;
-  relationType: string;
-}
+type EntityFormData = Omit<WorldEntity, 'id'> &
+  Partial<Character> & { id?: string };
 
 interface EntityModalProps {
   isOpen: boolean;
   onClose: () => void;
-  entity?: WorldEntity | null;
+  entity?: WorldEntity | Character | null;
   novelId: string;
   allEntities: WorldEntity[];
   onSuccess: () => void;
@@ -55,7 +39,7 @@ export default function EntityModal({
   onSuccess,
   isCharacter = false,
 }: EntityModalProps) {
-  const [formData, setFormData] = useState<WorldEntity>({
+  const [formData, setFormData] = useState<EntityFormData>({
     novelId,
     type: isCharacter ? 'character' : 'location',
     name: '',
@@ -77,7 +61,7 @@ export default function EntityModal({
   const isActuallyCharacter =
     isCharacter ||
     formData.type === 'character' ||
-    (entity as Record<string, unknown>)?.appearance !== undefined;
+    (entity as Character)?.appearance !== undefined;
 
   const fetchRelations = useCallback(
     async (id: string) => {
@@ -99,7 +83,10 @@ export default function EntityModal({
   useEffect(() => {
     if (entity) {
       // eslint-disable-next-line react-hooks/set-state-in-effect
-      setFormData(entity);
+      setFormData({
+        ...entity,
+        type: (entity as WorldEntity).type || 'character',
+      } as EntityFormData);
       if (entity.id) fetchRelations(entity.id);
     } else {
       setFormData({

@@ -1,6 +1,6 @@
 'use client';
 
-import { use, useState, useEffect } from 'react';
+import { use, useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import {
   Plus,
@@ -23,29 +23,7 @@ import { toast } from 'sonner';
 import EntityModal from '@/components/EntityModal';
 import WorldGraph from '@/components/WorldGraph';
 
-interface Character {
-  id: string;
-  name: string;
-  appearance?: string;
-  personality?: string;
-  history?: string;
-}
-
-interface WorldEntity {
-  id: string;
-  name: string;
-  type: string;
-  description?: string;
-  content?: string;
-  tags?: string[];
-}
-
-interface Relation {
-  id: string;
-  sourceEntityId: string;
-  targetEntityId: string;
-  relationType: string;
-}
+import { Character, WorldEntity, Relation } from '@/types';
 
 export default function WikiPage({
   params,

@@ -15,6 +15,7 @@ import {
   Handle,
   Position,
 } from '@xyflow/react';
+import { WorldEntity, Relation as WorldRelation } from '@/types';
 import '@xyflow/react/dist/style.css';
 
 // Custom Node Component
@@ -84,23 +85,6 @@ const EntityNode = ({
 const nodeTypes = {
   entity: EntityNode,
 };
-
-export interface WorldEntity {
-  id: string;
-  name: string;
-  type: string;
-  description?: string | null;
-  content?: string | null;
-  tags?: string[] | null;
-  novelId: string;
-}
-
-export interface WorldRelation {
-  id: string;
-  sourceEntityId: string;
-  targetEntityId: string;
-  relationType: string;
-}
 
 interface WorldGraphProps {
   entities: WorldEntity[];

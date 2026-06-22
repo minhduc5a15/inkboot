@@ -12,6 +12,7 @@ import {
   GripVertical,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Novel, Chapter } from '@/types';
 import { Progress } from '@/components/ui/progress';
 import { PromptDialog } from '@/components/ui/prompt-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
@@ -38,13 +39,6 @@ import {
   useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-
-interface Chapter {
-  id: string;
-  title: string;
-  order: number;
-  wordCount: number;
-}
 
 interface SortableChapterProps {
   chapter: Chapter;
@@ -112,16 +106,16 @@ function SortableChapter({ chapter, onDelete }: SortableChapterProps) {
   );
 }
 
-export default function NovelHub({
+export default function NovelDashboard({
   params,
 }: {
   params: Promise<{ id: string }>;
 }) {
   const { id } = use(params);
-  const [novel, setNovel] = useState<Record<string, unknown> | null>(null);
+  const [novel, setNovel] = useState<Novel | null>(null);
   const [chapters, setChapters] = useState<Chapter[]>([]);
   const [loading, setLoading] = useState(true);
-  const [stats, setStats] = useState<Array<Record<string, unknown>>>([]);
+  const [stats, setStats] = useState<{ date: string; wordCount: number }[]>([]);
 
   const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
