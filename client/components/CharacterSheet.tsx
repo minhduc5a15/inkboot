@@ -38,7 +38,7 @@ export default function CharacterSheet({
     setIsSaving(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/characters/${character.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/characters/${character.id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -60,7 +60,7 @@ export default function CharacterSheet({
     setIsDeleting(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/characters/${character.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/characters/${character.id}`,
         {
           method: 'DELETE',
         }

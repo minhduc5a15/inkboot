@@ -146,7 +146,7 @@ export default function NovelHub({
   const fetchData = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${id}`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}`
       );
       if (!res.ok) throw new Error('Failed to fetch novel');
 
@@ -157,7 +157,7 @@ export default function NovelHub({
       );
 
       const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${id}/stats`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/stats`
       );
       if (statsRes.ok) {
         setStats(await statsRes.json());
@@ -177,7 +177,7 @@ export default function NovelHub({
     setIsPromptOpen(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/chapters`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -200,7 +200,7 @@ export default function NovelHub({
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/chapters/${deletingChapterId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/chapters/${deletingChapterId}`,
         { method: 'DELETE' }
       );
       setDeletingChapterId(null);
@@ -226,7 +226,7 @@ export default function NovelHub({
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${id}/chapters/reorder`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/chapters/reorder`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -251,7 +251,7 @@ export default function NovelHub({
 
   const exportNovel = async (format: 'markdown' | 'text') => {
     window.open(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${id}/export?format=${format}`,
+      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${id}/export?format=${format}`,
       '_blank'
     );
   };

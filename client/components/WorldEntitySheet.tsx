@@ -40,7 +40,7 @@ export default function WorldEntitySheet({
     setIsSaving(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/world/${entity.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/world/${entity.id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -63,7 +63,7 @@ export default function WorldEntitySheet({
     setIsDeleting(true);
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/world/${entity.id}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/world/${entity.id}`,
         {
           method: 'DELETE',
         }

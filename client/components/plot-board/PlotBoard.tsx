@@ -70,7 +70,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
     try {
       setIsLoading(true);
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${novelId}/plot-board`
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board`
       );
       if (!res.ok) throw new Error('Failed to fetch cards');
       const data = await res.json();
@@ -201,7 +201,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
         position: c.position,
       }));
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${novelId}/plot-board/cards/reorder`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board/cards/reorder`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -242,7 +242,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
         // Create
         const payload = { ...updates, act: editingCard?.act || updates.act };
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${novelId}/plot-board/cards`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board/cards`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -259,7 +259,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
         setCards(cards.map((c) => (c.id === id ? { ...c, ...updates } : c)));
 
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${novelId}/plot-board/cards/${id}`,
+          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board/cards/${id}`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -290,7 +290,7 @@ export const PlotBoard: React.FC<PlotBoardProps> = ({ novelId }) => {
 
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:808'}/novels/${novelId}/plot-board/cards/${deletingCardId}`,
+        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/novels/${novelId}/plot-board/cards/${deletingCardId}`,
         {
           method: 'DELETE',
         }
