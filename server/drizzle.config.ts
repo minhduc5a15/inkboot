@@ -5,6 +5,6 @@ export default defineConfig({
   out: "./drizzle",
   dialect: "postgresql",
   dbCredentials: {
-    url: "postgresql://inkboot_admin:K%40khudenz1h@localhost:5432/inkboot"
+    url: process.env.DATABASE_URL as string
   },
 });
