@@ -101,6 +101,10 @@ export default function Editor({
         e.preventDefault();
         setShowSearchReplace((prev) => !prev);
       }
+      if (e.altKey && (e.key === 'p' || e.key === 'P' || e.key === 'π')) {
+        e.preventDefault();
+        setIsPreviewMode((prev) => !prev);
+      }
     };
     document.addEventListener('keydown', handleKeyDown);
     return () => document.removeEventListener('keydown', handleKeyDown);
@@ -748,7 +752,7 @@ export default function Editor({
         >
           {isPreviewMode ? (
             <div 
-              className="prose prose-lg focus:outline-none max-w-none font-serif text-[19px] leading-[1.8] text-[#c0c0c0] prose-invert text-justify whitespace-pre-line"
+              className="prose prose-lg focus:outline-none max-w-none font-serif text-[19px] leading-[1.8] text-[#c0c0c0] prose-invert text-justify"
               dangerouslySetInnerHTML={{ __html: renderedPreview }}
             />
           ) : (
