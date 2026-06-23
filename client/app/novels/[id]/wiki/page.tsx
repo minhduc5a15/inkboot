@@ -44,13 +44,13 @@ export default function WikiPage({
     try {
       const [charRes, worldRes, relRes] = await Promise.all([
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${novelId}/characters`
+          `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${novelId}/characters`
         ),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/novel/${novelId}`
+          `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/novel/${novelId}`
         ),
         fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/relations/${novelId}`
+          `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/relations/${novelId}`
         ),
       ]);
 
@@ -71,8 +71,8 @@ export default function WikiPage({
     if (!confirm('Xóa thực thể này?')) return;
     try {
       const url = isCharacter
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/characters/${id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/${id}`;
+        ? `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/characters/${id}`
+        : `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/${id}`;
 
       const res = await fetch(url, { method: 'DELETE' });
       if (res.ok) {

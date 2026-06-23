@@ -133,7 +133,7 @@ export default function NovelDashboard({
   const fetchData = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}`
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${id}`
       );
       if (!res.ok) throw new Error('Failed to fetch novel');
 
@@ -146,7 +146,7 @@ export default function NovelDashboard({
       );
 
       const statsRes = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/stats`
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${id}/stats`
       );
       if (statsRes.ok) {
         setStats(await statsRes.json());
@@ -166,7 +166,7 @@ export default function NovelDashboard({
     setIsPromptOpen(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -189,7 +189,7 @@ export default function NovelDashboard({
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${deletingChapterId}`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${deletingChapterId}`,
         { method: 'DELETE' }
       );
       setDeletingChapterId(null);
@@ -204,6 +204,23 @@ export default function NovelDashboard({
     setIsConfirmOpen(true);
   };
 
+  const handleUpdateNovel = async (updates: Partial<Novel>) => {
+    if (!novel) return;
+    try {
+      const res = await fetch(
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(updates),
+        }
+      );
+      if (!res.ok) throw new Error('Failed to update novel');
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
   const handleDragEnd = async (event: DragEndEvent) => {
     const { active, over } = event;
     if (over && active.id !== over.id) {
@@ -215,7 +232,7 @@ export default function NovelDashboard({
 
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/chapters/reorder`,
+          `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${id}/chapters/reorder`,
           {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
@@ -240,7 +257,7 @@ export default function NovelDashboard({
 
   const exportNovel = async (format: 'markdown' | 'text') => {
     window.open(
-      `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${id}/export?format=${format}`,
+      `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${id}/export?format=${format}`,
       '_blank'
     );
   };
@@ -302,12 +319,25 @@ export default function NovelDashboard({
             <span className="text-[11px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
               PROJECT HUB
             </span>
-            <h1 className="text-5xl font-serif italic text-white">
-              {novel.title}
-            </h1>
-            <p className="text-zinc-400 font-serif italic text-lg">
-              {novel.description}
-            </p>
+            <input
+              value={novel.title}
+              onChange={(e) => setNovel({ ...novel, title: e.target.value })}
+              onBlur={(e) => {
+                if (e.target.value.trim() !== '') {
+                  handleUpdateNovel({ title: e.target.value });
+                }
+              }}
+              className="text-5xl font-serif italic text-white bg-transparent border-none outline-none w-full placeholder:text-zinc-700"
+              placeholder="Novel Title"
+            />
+            <textarea
+              value={novel.description || ''}
+              onChange={(e) => setNovel({ ...novel, description: e.target.value })}
+              onBlur={(e) => handleUpdateNovel({ description: e.target.value })}
+              className="text-zinc-400 font-serif italic text-lg bg-transparent border-none outline-none w-full resize-none placeholder:text-zinc-700"
+              placeholder="Write a short description..."
+              rows={2}
+            />
           </div>
           <div className="flex gap-3">
             <Link href={`/novels/${id}/plot-board`}>

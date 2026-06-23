@@ -67,7 +67,7 @@ export default function EntityModal({
     async (id: string) => {
       try {
         const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/relations/${novelId}`
+          `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/relations/${novelId}`
         );
         if (res.ok) {
           const data = await res.json();
@@ -130,8 +130,8 @@ export default function EntityModal({
           };
 
       const url = entity?.id
-        ? `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/${baseDir}/${entity.id}`
-        : `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/${baseDir}`;
+        ? `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/${baseDir}/${entity.id}`
+        : `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/${baseDir}`;
 
       const response = await fetch(url, {
         method: entity?.id ? 'PATCH' : 'POST',
@@ -155,7 +155,7 @@ export default function EntityModal({
     if (!newRelation.targetId || !entity?.id) return;
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/relations`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/relations`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -179,7 +179,7 @@ export default function EntityModal({
   const deleteRelation = async (relId: string) => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/relations/${relId}`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/relations/${relId}`,
         {
           method: 'DELETE',
         }

@@ -202,6 +202,36 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
     }
   )
   .patch(
+    '/:id',
+    async ({ params: { id }, body, set }) => {
+      try {
+        const [updatedNovel] = await db
+          .update(novels)
+          .set({ ...body, updatedAt: new Date() })
+          .where(eq(novels.id, id))
+          .returning();
+
+        if (!updatedNovel) {
+          set.status = 404;
+          return { error: 'Novel not found' };
+        }
+        return updatedNovel;
+      } catch (error) {
+        set.status = 500;
+        return { error: 'Failed to update novel', details: error };
+      }
+    },
+    {
+      params: t.Object({
+        id: t.String(),
+      }),
+      body: t.Object({
+        title: t.Optional(t.String()),
+        description: t.Optional(t.String()),
+      }),
+    }
+  )
+  .patch(
     '/:id/chapters/reorder',
     async ({ params: { id }, body, set }) => {
       try {

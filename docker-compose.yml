@@ -1,4 +1,4 @@
-version: '3.8'
+version: '5.1'
 
 services:
   db:
@@ -8,8 +8,6 @@ services:
       POSTGRES_USER: inkboot_admin
       POSTGRES_PASSWORD: inkboot_password
       POSTGRES_DB: inkboot
-    ports:
-      - "5433:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
 
@@ -19,7 +17,7 @@ services:
       dockerfile: Dockerfile
     restart: always
     ports:
-      - "4000:3000"
+      - "4000:4000"
     environment:
       - DATABASE_URL=postgresql://inkboot_admin:inkboot_password@db:5432/inkboot
     depends_on:
@@ -29,11 +27,13 @@ services:
     build:
       context: ./client
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:4000
     restart: always
     ports:
       - "8000:80"
     environment:
-      - NEXT_PUBLIC_API_URL=http://localhost:4000
+      - INTERNAL_API_URL=http://server:4000
     depends_on:
       - server
 

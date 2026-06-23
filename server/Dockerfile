@@ -1,14 +1,24 @@
-FROM oven/bun:latest AS base
+FROM oven/bun:latest AS builder
 WORKDIR /app
 
-COPY package.json bun.lock ./
+COPY package.json bun.lock* ./
 RUN bun install --frozen-lockfile
 
 COPY . .
 
-EXPOSE 3000
-ENV PORT=3000
-ENV NODE_ENV=production
+FROM oven/bun:latest AS runner
+WORKDIR /app
 
-RUN chmod +x start.sh
-CMD ["./start.sh"]
+ENV NODE_ENV=production
+ENV PORT=4000
+
+COPY --from=builder /app/package.json ./
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/drizzle.config.ts ./
+COPY --from=builder /app/tsconfig.json ./
+
+EXPOSE ${PORT}
+
+CMD ["sh", "-c", "bun run drizzle-kit push && bun run src/index.ts"]
+

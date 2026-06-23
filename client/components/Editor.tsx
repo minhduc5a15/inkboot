@@ -4,6 +4,7 @@ import { useEditor, EditorContent } from '@tiptap/react';
 import StarterKit from '@tiptap/starter-kit';
 import Placeholder from '@tiptap/extension-placeholder';
 import Underline from '@tiptap/extension-underline';
+import SearchAndReplace from '@sereneinserenade/tiptap-search-and-replace';
 import { useDebouncedCallback } from 'use-debounce';
 import { useState, useEffect, useCallback } from 'react';
 import type { Editor as EditorType } from '@tiptap/react';
@@ -22,6 +23,9 @@ import {
   MapPin,
   Shield,
   ScrollText,
+  ArrowUp,
+  ArrowDown,
+  X,
 } from 'lucide-react';
 import {
   Popover,
@@ -78,10 +82,28 @@ export default function Editor({
   const [worldEntities, setWorldEntities] = useState<WorldEntity[]>([]);
   const [worldSearch, setWorldSearch] = useState('');
 
+  const [showSearchReplace, setShowSearchReplace] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [replaceTerm, setReplaceTerm] = useState('');
+  const [caseSensitive, setCaseSensitive] = useState(false);
+  const [searchResultCount, setSearchResultCount] = useState(0);
+  const [searchResultIndex, setSearchResultIndex] = useState(0);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+        e.preventDefault();
+        setShowSearchReplace((prev) => !prev);
+      }
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, []);
+
   const fetchWorldEntities = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/world/novel/${novelId}`
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/world/novel/${novelId}`
       );
       const data = await res.json();
       setWorldEntities(data);
@@ -99,7 +121,7 @@ export default function Editor({
   const fetchVersions = useCallback(async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/versions`
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${id}/versions`
       );
       const data = await res.json();
       setVersions(data);
@@ -113,7 +135,7 @@ export default function Editor({
     try {
       const content = JSON.stringify(editor.getJSON());
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/versions`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${id}/versions`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -132,7 +154,7 @@ export default function Editor({
   const restoreVersion = async (versionId: string, versionContent: string) => {
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}/restore`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${id}/restore`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -155,7 +177,7 @@ export default function Editor({
     setSaveStatus('saving');
     try {
       const response = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/chapters/${id}`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${id}`,
         {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
@@ -183,6 +205,9 @@ export default function Editor({
       Placeholder.configure({
         placeholder: 'Bắt đầu câu chuyện của bạn...',
       }),
+      SearchAndReplace.configure({
+        searchResultClass: 'search-result',
+      }),
     ],
     content: (() => {
       if (!initialContent) return '';
@@ -195,7 +220,7 @@ export default function Editor({
     editorProps: {
       attributes: {
         class:
-          'prose prose-lg focus:outline-none max-w-none font-serif text-[19px] leading-[1.8] text-[#c0c0c0] transition-all duration-500 dark:prose-invert text-justify',
+          'prose prose-lg focus:outline-none max-w-none font-serif text-[19px] leading-[1.8] text-[#c0c0c0] transition-all duration-500 prose-invert text-justify',
       },
     },
     onUpdate: ({ editor }) => {
@@ -205,8 +230,34 @@ export default function Editor({
     },
     onTransaction: ({ editor }) => {
       calculateStats(editor);
+      const storage = editor.storage as unknown as Record<string, unknown>;
+      const searchStorage = storage.searchAndReplace as { results: unknown[]; resultIndex: number } | undefined;
+      if (searchStorage) {
+        setSearchResultCount(searchStorage.results.length);
+        setSearchResultIndex(searchStorage.resultIndex);
+      }
     },
   });
+
+  useEffect(() => {
+    if (!editor) return;
+    if (showSearchReplace) {
+      editor.commands.setCaseSensitive(caseSensitive);
+      editor.commands.setSearchTerm(searchTerm);
+      editor.commands.setReplaceTerm(replaceTerm);
+    } else {
+      editor.commands.setSearchTerm('');
+    }
+  }, [searchTerm, replaceTerm, caseSensitive, showSearchReplace, editor]);
+
+  useEffect(() => {
+    if (searchResultCount > 0) {
+      const currentResult = document.querySelector('.search-result-current');
+      if (currentResult) {
+        currentResult.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      }
+    }
+  }, [searchResultIndex, searchResultCount, searchTerm]);
 
   if (!editor) return null;
 
@@ -214,6 +265,87 @@ export default function Editor({
     <div
       className={`flex-1 overflow-y-auto px-6 md:px-20 pt-12 pb-32 flex justify-center transition-all duration-700 ${isFocusMode ? 'pt-[15vh]' : ''}`}
     >
+      {/* Search & Replace Widget */}
+      <AnimatePresence>
+        {showSearchReplace && (
+          <motion.div
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="fixed top-24 right-8 z-[200] bg-zinc-900 border border-zinc-800 shadow-xl rounded-md p-2 w-[400px] flex flex-col gap-2"
+          >
+            <div className="flex items-center gap-1">
+              <div className="relative flex-1">
+                <input
+                  type="text"
+                  autoFocus
+                  value={searchTerm}
+                  onChange={(e) => setSearchTerm(e.target.value)}
+                  placeholder="Find..."
+                  className="w-full bg-zinc-950 text-sm text-[#d4d4d4] px-2 py-1.5 rounded border border-zinc-800 focus:outline-none focus:border-zinc-600 transition-colors"
+                />
+                <button
+                  onClick={() => setCaseSensitive(!caseSensitive)}
+                  className={`absolute right-1 top-1/2 -translate-y-1/2 p-1 rounded hover:bg-zinc-800 flex items-center justify-center h-6 w-6 transition-colors ${caseSensitive ? 'bg-zinc-800 text-white border border-zinc-700' : 'text-zinc-500 border border-transparent'}`}
+                  title="Match Case"
+                >
+                  <span className="font-serif italic text-xs font-semibold leading-none">Aa</span>
+                </button>
+              </div>
+              {searchTerm && (
+                <span className="text-xs text-zinc-500 px-1 whitespace-nowrap min-w-[70px] text-center">
+                  {searchResultCount > 0 ? `${searchResultIndex + 1} of ${searchResultCount}` : 'No results'}
+                </span>
+              )}
+              <button
+                onClick={() => editor?.commands.previousSearchResult()}
+                className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded transition-colors"
+                title="Previous Match"
+              >
+                <ArrowUp size={16} />
+              </button>
+              <button
+                onClick={() => editor?.commands.nextSearchResult()}
+                className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded transition-colors"
+                title="Next Match"
+              >
+                <ArrowDown size={16} />
+              </button>
+              <button
+                onClick={() => setShowSearchReplace(false)}
+                className="p-1.5 text-zinc-500 hover:text-white hover:bg-zinc-800 rounded ml-1 transition-colors"
+                title="Close"
+              >
+                <X size={16} />
+              </button>
+            </div>
+            <div className="flex items-center gap-1">
+              <input
+                type="text"
+                value={replaceTerm}
+                onChange={(e) => setReplaceTerm(e.target.value)}
+                placeholder="Replace"
+                className="flex-1 bg-zinc-950 text-sm text-[#d4d4d4] px-2 py-1.5 rounded border border-zinc-800 focus:outline-none focus:border-zinc-600 transition-colors"
+              />
+              <button
+                onClick={() => editor?.commands.replace()}
+                className="p-1.5 text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-medium px-3 transition-colors"
+                title="Replace"
+              >
+                Replace
+              </button>
+              <button
+                onClick={() => editor?.commands.replaceAll()}
+                className="p-1.5 text-xs text-zinc-400 hover:text-white hover:bg-zinc-800 rounded font-medium px-3 transition-colors"
+                title="Replace All"
+              >
+                All
+              </button>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
       {/* Lumina-style Focus Mode Exit */}
       <AnimatePresence>
         {isFocusMode && (
@@ -589,36 +721,34 @@ export default function Editor({
         </div>
 
         {/* Floating Stats */}
-        <div className="fixed bottom-10 left-0 right-0 z-[120] pointer-events-none group px-8">
-          <div className="max-w-5xl mx-auto flex justify-between items-end">
-            <AnimatePresence>
-              {!isFocusMode ? (
-                <motion.div
-                  initial={{ opacity: 0, y: 20 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  exit={{ opacity: 0 }}
-                  className="flex items-center gap-6 text-[11px] tracking-widest uppercase text-white font-medium opacity-30 pointer-events-auto"
-                >
-                  <span>{wordCount} WORDS</span>
-                  <div className="h-3 w-px bg-white opacity-20" />
-                  <span>{Math.ceil(wordCount / 200)} MINS</span>
-                  <div className="h-3 w-px bg-white opacity-20" />
-                  <div className="flex items-center gap-2">
-                    {saveStatus === 'saving' ? (
-                      <Loader2 size={12} className="animate-spin" />
-                    ) : (
-                      <CloudCheck size={12} className="text-emerald-500" />
-                    )}
-                    <span className="opacity-60">{saveStatus}</span>
-                  </div>
-                </motion.div>
-              ) : (
-                <div className="opacity-0 group-hover:opacity-30 transition-opacity duration-500 text-[10px] text-white uppercase tracking-[0.4em] pb-4">
-                  ALT + F TO EXIT
+        <div className="fixed bottom-6 right-8 z-[120] pointer-events-none group">
+          <AnimatePresence>
+            {!isFocusMode ? (
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0 }}
+                className="flex items-center gap-4 text-[10px] tracking-widest uppercase text-white font-medium opacity-40 pointer-events-auto hover:opacity-100 transition-opacity bg-zinc-900/60 backdrop-blur-md px-5 py-2.5 rounded-full border border-zinc-800 shadow-lg"
+              >
+                <span>{wordCount} WORDS</span>
+                <div className="h-3 w-px bg-white opacity-20" />
+                <span>{Math.ceil(wordCount / 200)} MINS</span>
+                <div className="h-3 w-px bg-white opacity-20" />
+                <div className="flex items-center gap-2">
+                  {saveStatus === 'saving' ? (
+                    <Loader2 size={12} className="animate-spin" />
+                  ) : (
+                    <CloudCheck size={12} className="text-emerald-500" />
+                  )}
+                  <span className="opacity-80">{saveStatus}</span>
                 </div>
-              )}
-            </AnimatePresence>
-          </div>
+              </motion.div>
+            ) : (
+              <div className="opacity-0 group-hover:opacity-40 transition-opacity duration-500 text-[10px] text-white uppercase tracking-[0.4em] bg-zinc-900/60 backdrop-blur-md px-5 py-2.5 rounded-full border border-zinc-800">
+                ALT + F TO EXIT
+              </div>
+            )}
+          </AnimatePresence>
         </div>
       </div>
     </div>

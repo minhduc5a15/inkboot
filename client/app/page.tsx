@@ -13,6 +13,15 @@ import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
 import { PromptDialog } from '@/components/ui/prompt-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 import { Novel } from '@/types';
 
@@ -24,10 +33,14 @@ export default function Library() {
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [deletingNovelId, setDeletingNovelId] = useState<string | null>(null);
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [newTitle, setNewTitle] = useState('');
+  const [newDesc, setNewDesc] = useState('');
+
   const fetchNovels = async () => {
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels`
       );
       const data = await res.json();
       setNovels(data);
@@ -43,18 +56,22 @@ export default function Library() {
     fetchNovels();
   }, []);
 
-  const handleCreateNovel = async (title: string) => {
-    setIsPromptOpen(false);
+  const handleCreateNovel = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newTitle.trim()) return;
+    setIsCreateModalOpen(false);
     try {
       const res = await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title, description: 'A new story begins...' }),
+          body: JSON.stringify({ title: newTitle.trim(), description: newDesc.trim() }),
         }
       );
       if (res.ok) fetchNovels();
+      setNewTitle('');
+      setNewDesc('');
     } catch (error) {
       console.error(error);
     }
@@ -65,7 +82,7 @@ export default function Library() {
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${deletingNovelId}`,
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${deletingNovelId}`,
         { method: 'DELETE' }
       );
       setDeletingNovelId(null);
@@ -98,7 +115,7 @@ export default function Library() {
           </div>
 
           <Button
-            onClick={() => setIsPromptOpen(true)}
+            onClick={() => setIsCreateModalOpen(true)}
             className="bg-zinc-800/50 hover:bg-zinc-700/50 text-white border border-zinc-700/50 rounded h-11 px-8 text-[10px] font-bold uppercase tracking-[0.2em] transition-all"
           >
             <Plus size={16} className="mr-2" /> New Project
@@ -190,7 +207,7 @@ export default function Library() {
               </p>
             </div>
             <Button
-              onClick={() => setIsPromptOpen(true)}
+              onClick={() => setIsCreateModalOpen(true)}
               className="bg-zinc-800 text-white hover:bg-zinc-700"
             >
               Create First Story
@@ -199,14 +216,55 @@ export default function Library() {
         )}
       </div>
 
-      <PromptDialog
-        isOpen={isPromptOpen}
-        title="Create New Project"
-        placeholder="e.g. The Obsidian Crown"
-        onConfirm={handleCreateNovel}
-        onCancel={() => setIsPromptOpen(false)}
-        confirmText="Create"
-      />
+      <Dialog open={isCreateModalOpen} onOpenChange={setIsCreateModalOpen}>
+        <DialogContent className="bg-zinc-950 border-zinc-800 text-zinc-100 sm:max-w-[450px]">
+          <form onSubmit={handleCreateNovel}>
+            <DialogHeader>
+              <DialogTitle>Create New Project</DialogTitle>
+            </DialogHeader>
+
+            <div className="py-4 space-y-4">
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Title</label>
+                <Input
+                  value={newTitle}
+                  onChange={(e) => setNewTitle(e.target.value)}
+                  placeholder="e.g. The Obsidian Crown"
+                  className="bg-zinc-900 border-zinc-800 focus-visible:ring-zinc-700"
+                  autoFocus
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Description</label>
+                <Textarea
+                  value={newDesc}
+                  onChange={(e) => setNewDesc(e.target.value)}
+                  placeholder="A new story begins..."
+                  className="bg-zinc-900 border-zinc-800 focus-visible:ring-zinc-700 h-24 resize-none"
+                />
+              </div>
+            </div>
+
+            <DialogFooter className="flex sm:justify-end gap-2">
+              <Button
+                type="button"
+                variant="ghost"
+                onClick={() => setIsCreateModalOpen(false)}
+                className="hover:bg-zinc-800 hover:text-zinc-100"
+              >
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                className="bg-zinc-100 text-zinc-900 hover:bg-zinc-200"
+                disabled={!newTitle.trim()}
+              >
+                Create
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
 
       <ConfirmDialog
         isOpen={isConfirmOpen}
