@@ -11,7 +11,6 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { motion } from 'motion/react';
-import { PromptDialog } from '@/components/ui/prompt-dialog';
 import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import {
   Dialog,
@@ -29,7 +28,6 @@ export default function Library() {
   const [novels, setNovels] = useState<Novel[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const [isPromptOpen, setIsPromptOpen] = useState(false);
   const [isConfirmOpen, setIsConfirmOpen] = useState(false);
   const [deletingNovelId, setDeletingNovelId] = useState<string | null>(null);
 
@@ -40,7 +38,7 @@ export default function Library() {
   const fetchNovels = async () => {
     try {
       const res = await fetch(
-        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels`
+        `${process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`
       );
       const data = await res.json();
       setNovels(data);
@@ -62,11 +60,14 @@ export default function Library() {
     setIsCreateModalOpen(false);
     try {
       const res = await fetch(
-        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels`,
+        `${process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ title: newTitle.trim(), description: newDesc.trim() }),
+          body: JSON.stringify({
+            title: newTitle.trim(),
+            description: newDesc.trim(),
+          }),
         }
       );
       if (res.ok) fetchNovels();
@@ -82,7 +83,7 @@ export default function Library() {
     setIsConfirmOpen(false);
     try {
       await fetch(
-        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/novels/${deletingNovelId}`,
+        `${process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000'}/novels/${deletingNovelId}`,
         { method: 'DELETE' }
       );
       setDeletingNovelId(null);
@@ -225,7 +226,9 @@ export default function Library() {
 
             <div className="py-4 space-y-4">
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Title</label>
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">
+                  Title
+                </label>
                 <Input
                   value={newTitle}
                   onChange={(e) => setNewTitle(e.target.value)}
@@ -235,7 +238,9 @@ export default function Library() {
                 />
               </div>
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">Description</label>
+                <label className="text-xs uppercase tracking-widest text-zinc-500 font-semibold">
+                  Description
+                </label>
                 <Textarea
                   value={newDesc}
                   onChange={(e) => setNewDesc(e.target.value)}

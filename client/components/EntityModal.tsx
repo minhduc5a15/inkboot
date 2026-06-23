@@ -18,7 +18,7 @@ import { toast } from 'sonner';
 import { WorldEntity, Relation, Character } from '@/types';
 
 type EntityFormData = Omit<WorldEntity, 'id'> &
-  Partial<Character> & { id?: string };
+  Partial<Character> & { id?: string; age?: number | null | string };
 
 interface EntityModalProps {
   isOpen: boolean;
@@ -49,6 +49,7 @@ export default function EntityModal({
     personality: '',
     history: '',
     tags: [],
+    age: null,
   });
   const [isSaving, setIsSaving] = useState(false);
   const [tagInput, setTagInput] = useState('');
@@ -99,6 +100,7 @@ export default function EntityModal({
         personality: '',
         history: '',
         tags: [],
+        age: null,
       });
       setRelations([]);
     }
@@ -119,6 +121,7 @@ export default function EntityModal({
             personality: formData.personality,
             history: formData.history,
             novelId: formData.novelId,
+            age: formData.age ? Number(formData.age) : null,
           }
         : {
             name: formData.name,
@@ -199,8 +202,8 @@ export default function EntityModal({
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="bg-zinc-900 border-zinc-800 text-[#d4d4d4] max-w-2xl max-h-[90vh] flex flex-col p-0">
-        <DialogHeader className="p-6 border-b border-zinc-800">
+      <DialogContent className="bg-zinc-900 border-zinc-800 text-[#d4d4d4] max-w-3xl overflow-hidden max-h-[90vh] flex flex-col p-0">
+        <DialogHeader className="p-6 border-b border-zinc-800 shrink-0">
           <DialogTitle className="font-serif italic text-2xl text-white">
             {entity?.id
               ? `${isActuallyCharacter ? 'Hồ sơ nhân vật' : 'Thông tin thực thể'}: ${formData.name}`
@@ -208,8 +211,8 @@ export default function EntityModal({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6">
-          <div className="space-y-6">
+        <div className="flex-1 overflow-y-auto min-h-0">
+          <div className="space-y-6 p-6">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>
@@ -244,6 +247,20 @@ export default function EntityModal({
                   <option value="item">Vật phẩm</option>
                 </select>
               </div>
+              {isActuallyCharacter && (
+                <div className="space-y-2">
+                  <Label>Tuổi (Age)</Label>
+                  <Input
+                    type="number"
+                    value={formData.age || ''}
+                    onChange={(e) =>
+                      setFormData({ ...formData, age: e.target.value ? parseInt(e.target.value) : null })
+                    }
+                    className="bg-zinc-950 border-zinc-800"
+                    placeholder="Vd: 20"
+                  />
+                </div>
+              )}
             </div>
 
             {isActuallyCharacter ? (
@@ -357,19 +374,26 @@ export default function EntityModal({
                 </h3>
 
                 <div className="flex gap-2">
-                  <select
-                    value={newRelation.type}
-                    onChange={(e) =>
-                      setNewRelation({ ...newRelation, type: e.target.value })
-                    }
-                    className="flex-1 h-9 px-2 rounded-md bg-zinc-950 border border-zinc-800 text-xs"
-                  >
-                    <option value="belongs to">Thuộc về</option>
-                    <option value="is enemy of">Kẻ thù của</option>
-                    <option value="located in">Nằm tại</option>
-                    <option value="related to">Liên quan đến</option>
-                    <option value="member of">Thành viên của</option>
-                  </select>
+                  <div className="flex-1">
+                    <Input
+                      list="relation-suggestions"
+                      value={newRelation.type}
+                      onChange={(e) =>
+                        setNewRelation({ ...newRelation, type: e.target.value })
+                      }
+                      className="h-9 bg-zinc-950 border-zinc-800 text-xs placeholder:text-zinc-500"
+                      placeholder="Nhập loại liên kết..."
+                    />
+                    <datalist id="relation-suggestions">
+                      <option value="Thuộc về" />
+                      <option value="Nằm tại" />
+                      <option value="Kẻ thù của" />
+                      <option value="Đồng minh" />
+                      <option value="Gia đình" />
+                      <option value="Sư đồ" />
+                      <option value="Người hầu" />
+                    </datalist>
+                  </div>
                   <select
                     value={newRelation.targetId}
                     onChange={(e) =>
@@ -431,9 +455,9 @@ export default function EntityModal({
               </div>
             )}
           </div>
-        </ScrollArea>
+        </div>
 
-        <DialogFooter className="p-6 border-t border-zinc-800 bg-zinc-900">
+        <DialogFooter className="p-6 border-t border-zinc-800 bg-zinc-900 shrink-0">
           <Button
             variant="ghost"
             onClick={onClose}
