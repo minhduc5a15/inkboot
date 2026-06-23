@@ -94,6 +94,13 @@ export default function Editor({
 
   const [isPreviewMode, setIsPreviewMode] = useState(false);
   const [renderedPreview, setRenderedPreview] = useState('');
+  const [chapterTitle, setChapterTitle] = useState(title);
+  const [prevTitle, setPrevTitle] = useState(title);
+
+  if (title !== prevTitle) {
+    setPrevTitle(title);
+    setChapterTitle(title);
+  }
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -201,6 +208,25 @@ export default function Editor({
       setSaveStatus('error');
     }
   }, 2000);
+
+  const debouncedSaveTitle = useDebouncedCallback(async (newTitle: string) => {
+    setSaveStatus('saving');
+    try {
+      const response = await fetch(
+        `${(process.env.INTERNAL_API_URL || process.env.NEXT_PUBLIC_API_URL) || 'http://localhost:4000'}/chapters/${id}`,
+        {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ title: newTitle }),
+        }
+      );
+      if (!response.ok) throw new Error('Failed to save title');
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Save title error:', error);
+      setSaveStatus('error');
+    }
+  }, 1500);
 
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
@@ -394,9 +420,13 @@ export default function Editor({
             </span>
             <input
               type="text"
-              readOnly
-              value={title}
-              className="w-full bg-transparent border-none outline-none text-4xl font-serif text-white italic opacity-90 leading-tight tracking-tight"
+              value={chapterTitle}
+              onChange={(e) => {
+                setChapterTitle(e.target.value);
+                debouncedSaveTitle(e.target.value);
+              }}
+              placeholder="Nhập tiêu đề chương..."
+              className="w-full bg-transparent border-none outline-none text-4xl font-serif text-white italic opacity-90 leading-tight tracking-tight focus:ring-0 focus:border-none focus:outline-none"
             />
           </div>
 
