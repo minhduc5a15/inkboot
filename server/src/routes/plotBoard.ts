@@ -102,7 +102,12 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
     body: t.Object({
       title: t.String(),
       description: t.Optional(t.String()),
-      act: t.String(),
+      act: t.Union([
+        t.Literal('act1'),
+        t.Literal('act2a'),
+        t.Literal('act2b'),
+        t.Literal('act3')
+      ]),
       position: t.Optional(t.Number()),
       foreshadowingNotes: t.Optional(t.String()),
       linkedEntityIds: t.Optional(t.Array(t.String()))
@@ -134,7 +139,12 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
     }),
     body: t.Array(t.Object({
       id: t.String(),
-      act: t.String(),
+      act: t.Union([
+        t.Literal('act1'),
+        t.Literal('act2a'),
+        t.Literal('act2b'),
+        t.Literal('act3')
+      ]),
       position: t.Number()
     }))
   })
@@ -187,7 +197,12 @@ export const plotBoardRoutes = new Elysia({ prefix: '/novels/:id/plot-board' })
     body: t.Object({
       title: t.Optional(t.String()),
       description: t.Optional(t.String()),
-      act: t.Optional(t.String()),
+      act: t.Optional(t.Union([
+        t.Literal('act1'),
+        t.Literal('act2a'),
+        t.Literal('act2b'),
+        t.Literal('act3')
+      ])),
       foreshadowingNotes: t.Optional(t.String()),
       linkedEntityIds: t.Optional(t.Array(t.String()))
     })

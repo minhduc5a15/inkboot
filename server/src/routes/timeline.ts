@@ -21,8 +21,18 @@ export const timelineRoutes = new Elysia({ prefix: '/timeline' })
             title: t.String(),
             content: t.Optional(t.String()),
             datePoint: t.Optional(t.String()),
-            type: t.Optional(t.String()),
-            arc: t.Optional(t.String()),
+            type: t.Optional(t.Union([
+                t.Literal('event'),
+                t.Literal('climax'),
+                t.Literal('twist'),
+                t.Literal('resolution')
+            ])),
+            arc: t.Optional(t.Union([
+                t.Literal('act_1'),
+                t.Literal('act_2_part_1'),
+                t.Literal('act_2_part_2'),
+                t.Literal('act_3')
+            ])),
             novelId: t.String()
         })
     })
@@ -51,8 +61,18 @@ export const timelineRoutes = new Elysia({ prefix: '/timeline' })
             title: t.Optional(t.String()),
             content: t.Optional(t.String()),
             datePoint: t.Optional(t.String()),
-            type: t.Optional(t.String()),
-            arc: t.Optional(t.String())
+            type: t.Optional(t.Union([
+                t.Literal('event'),
+                t.Literal('climax'),
+                t.Literal('twist'),
+                t.Literal('resolution')
+            ])),
+            arc: t.Optional(t.Union([
+                t.Literal('act_1'),
+                t.Literal('act_2_part_1'),
+                t.Literal('act_2_part_2'),
+                t.Literal('act_3')
+            ]))
         })
     })
     .delete('/:id', async ({ params: { id }, set }) => {

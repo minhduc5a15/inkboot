@@ -9,13 +9,40 @@ import { searchRoutes } from './routes/search';
 
 import { plotBoardRoutes } from './routes/plotBoard';
 
-const app = new Elysia()
+export const app = new Elysia()
   .use(
     cors({
-      origin: 'http://localhost:8000',
+      origin: process.env.CORS_ORIGIN || 'http://localhost:8000',
       methods: ['GET', 'POST', 'PATCH', 'PUT', 'DELETE', 'OPTIONS'],
     })
   )
+  .onError(({ code, error, set }) => {
+    console.error(`[Elysia Error] ${code}:`, error);
+
+    if (code === 'VALIDATION') {
+      set.status = 422;
+      return {
+        status: 'error',
+        message: 'Validation Error',
+        details: error.message,
+      };
+    }
+
+    if (code === 'NOT_FOUND') {
+      set.status = 404;
+      return {
+        status: 'error',
+        message: 'Not Found',
+      };
+    }
+
+    set.status = 500;
+    return {
+      status: 'error',
+      message: 'Internal Server Error',
+      ...(process.env.NODE_ENV === 'development' && { details: error instanceof Error ? error.message : String(error) }),
+    };
+  })
   .use(novelRoutes)
   .use(chapterRoutes)
   .use(characterRoutes)
@@ -23,9 +50,11 @@ const app = new Elysia()
   .use(worldRoutes)
   .use(searchRoutes)
   .use(plotBoardRoutes)
-  .get('/', () => 'Inkboot API is running')
-  .listen(4000);
+  .get('/', () => 'Inkboot API is running');
 
-console.log(
-  `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
-);
+if (process.env.NODE_ENV !== 'test') {
+  app.listen(process.env.PORT ? parseInt(process.env.PORT) : 4000);
+  console.log(
+    `🦊 Elysia is running at ${app.server?.hostname}:${app.server?.port}`
+  );
+}

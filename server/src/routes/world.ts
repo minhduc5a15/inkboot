@@ -1,7 +1,7 @@
 import { Elysia, t } from 'elysia';
 import { db } from '../db';
 import { worldEntities, entityRelations } from '../schema';
-import { eq, and, asc, inArray, or } from 'drizzle-orm';
+import { eq, and, asc, inArray, or, not } from 'drizzle-orm';
 
 export const worldRoutes = new Elysia({ prefix: '/world' })
   .post(
@@ -22,7 +22,13 @@ export const worldRoutes = new Elysia({ prefix: '/world' })
     {
       body: t.Object({
         novelId: t.String(),
-        type: t.String(),
+        type: t.Union([
+          t.Literal('character'),
+          t.Literal('location'),
+          t.Literal('organization'),
+          t.Literal('lore'),
+          t.Literal('item'),
+        ]),
         name: t.String(),
         description: t.Optional(t.String({ maxLength: 2000 })),
         content: t.Optional(t.String({ maxLength: 5000000 })),
@@ -37,7 +43,7 @@ export const worldRoutes = new Elysia({ prefix: '/world' })
       return await db
         .select()
         .from(worldEntities)
-        .where(eq(worldEntities.novelId, novelId))
+        .where(and(eq(worldEntities.novelId, novelId), not(eq(worldEntities.type, 'character'))))
         .orderBy(asc(worldEntities.name));
     } catch (error) {
       return { error: 'Failed to fetch entities' };
@@ -127,7 +133,6 @@ export const worldRoutes = new Elysia({ prefix: '/world' })
   )
   .get('/relations/:novelId', async ({ params: { novelId } }) => {
     try {
-      // Standard inner join for better performance and scale
       return await db
         .select({
           id: entityRelations.id,

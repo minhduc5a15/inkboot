@@ -3,11 +3,11 @@ import { db } from '../db';
 import {
   novels,
   chapters,
-  characters,
+  worldEntities,
   timelineEvents,
   writingLogs,
 } from '../schema';
-import { eq, desc, asc } from 'drizzle-orm';
+import { eq, desc, asc, and } from 'drizzle-orm';
 
 export const novelRoutes = new Elysia({ prefix: '/novels' })
   .get('/', async () => {
@@ -297,11 +297,15 @@ export const novelRoutes = new Elysia({ prefix: '/novels' })
     '/:id/characters',
     async ({ params: { id } }) => {
       try {
-        return await db
+        const entities = await db
           .select()
-          .from(characters)
-          .where(eq(characters.novelId, id))
-          .orderBy(asc(characters.name));
+          .from(worldEntities)
+          .where(and(eq(worldEntities.novelId, id), eq(worldEntities.type, 'character')))
+          .orderBy(asc(worldEntities.name));
+        return entities.map(e => ({
+          ...e,
+          ...(e.metadata || {})
+        }));
       } catch (error) {
         return { error: 'Failed to fetch characters', details: error };
       }
