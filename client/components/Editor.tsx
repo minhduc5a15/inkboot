@@ -7,6 +7,7 @@ import Underline from '@tiptap/extension-underline';
 import SearchAndReplace from '@sereneinserenade/tiptap-search-and-replace';
 import { useDebouncedCallback } from 'use-debounce';
 import { useState, useEffect, useCallback } from 'react';
+import { marked } from 'marked';
 import type { Editor as EditorType } from '@tiptap/react';
 import {
   Bold,
@@ -26,6 +27,8 @@ import {
   ArrowUp,
   ArrowDown,
   X,
+  Eye,
+  EyeOff,
 } from 'lucide-react';
 import {
   Popover,
@@ -88,6 +91,9 @@ export default function Editor({
   const [caseSensitive, setCaseSensitive] = useState(false);
   const [searchResultCount, setSearchResultCount] = useState(0);
   const [searchResultIndex, setSearchResultIndex] = useState(0);
+
+  const [isPreviewMode, setIsPreviewMode] = useState(false);
+  const [renderedPreview, setRenderedPreview] = useState('');
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -240,6 +246,19 @@ export default function Editor({
   });
 
   useEffect(() => {
+    if (isPreviewMode && editor) {
+      const rawText = editor.getText();
+      // Parse markdown to HTML
+      const html = marked.parse(rawText);
+      // marked.parse can return a promise if async options are used, but since we didn't pass any, it returns string.
+      // We can use Promise.resolve to handle it safely or cast if we know it's a string, or resolve it.
+      Promise.resolve(html).then((res) => {
+        setRenderedPreview(res);
+      });
+    }
+  }, [isPreviewMode, editor]);
+
+  useEffect(() => {
     if (!editor) return;
     if (showSearchReplace) {
       editor.commands.setCaseSensitive(caseSensitive);
@@ -380,7 +399,7 @@ export default function Editor({
           <div className="flex items-center gap-4">
             {/* Toolbar (Integrated into Header) */}
             <AnimatePresence>
-              {!isFocusMode && (
+              {!isFocusMode && !isPreviewMode && (
                 <motion.div
                   initial={{ opacity: 0, x: 20 }}
                   animate={{ opacity: 1, x: 0 }}
@@ -414,6 +433,16 @@ export default function Editor({
 
             {!isFocusMode && (
               <div className="flex gap-2">
+                <Button
+                  onClick={() => setIsPreviewMode(!isPreviewMode)}
+                  variant="ghost"
+                  size="icon"
+                  className={`h-8 w-8 transition-all ${isPreviewMode ? 'text-emerald-400 bg-white/5 border border-emerald-500/30' : 'text-zinc-500 hover:text-white hover:bg-white/5'}`}
+                  title={isPreviewMode ? "Soạn thảo" : "Xem trước Markdown"}
+                >
+                  {isPreviewMode ? <EyeOff size={16} /> : <Eye size={16} />}
+                </Button>
+
                 <Dialog>
                   <DialogTrigger asChild>
                     <Button
@@ -717,7 +746,14 @@ export default function Editor({
         <div
           className={`min-h-[80vh] transition-all duration-700 ${!isFocusMode ? 'border-t border-zinc-700 pt-6 mt-4' : ''}`}
         >
-          <EditorContent editor={editor} />
+          {isPreviewMode ? (
+            <div 
+              className="prose prose-lg focus:outline-none max-w-none font-serif text-[19px] leading-[1.8] text-[#c0c0c0] prose-invert text-justify whitespace-pre-line"
+              dangerouslySetInnerHTML={{ __html: renderedPreview }}
+            />
+          ) : (
+            <EditorContent editor={editor} />
+          )}
         </div>
 
         {/* Floating Stats */}
